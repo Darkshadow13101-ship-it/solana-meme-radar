@@ -12,6 +12,9 @@ const marketCaption = document.querySelector('#market-caption');
 
 const API = 'https://api.dexscreener.com';
 const REFRESH_MS = 30000;
+let activeFilter = 'all';
+let searchValue = '';
+
 let tokens = [];
 
 const trendClass = v => Number(v) >= 0 ? 'gain' : 'loss';
@@ -65,9 +68,10 @@ function signalFor(score, p) {
 function tokenRow(t, i) {
   return `<tr><td>${i + 1}</td><td><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div></td><td>${fmtUsd(t.price)}</td><td class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</td><td class="${trendClass(t.h24)}">${t.h24 >= 0 ? '+' : ''}${t.h24.toFixed(2)}%</td><td>${fmtCompact(t.volume)}</td><td>${fmtCompact(t.liquidity)}</td><td><span class="signal ${t.signal.toLowerCase()}">${t.signal} ${t.fomo}</span></td><td><button class="star" aria-label="Open ${t.symbol}" onclick="window.open('${t.url}','_blank')">↗</button></td></tr>`;
 }
-function renderFomoLeaderboard(items){const el=document.querySelector('#fomo-leaderboard');if(!el||!items.length)return;const top=items.slice(0,10);const cards=top.map((t,i)=>`<a class="leader-item" href="${t.url}" target="_blank" rel="noreferrer"><span class="leader-rank">#${i+1}</span><span class="leader-symbol">${t.symbol}</span><span class="leader-score">${t.fomo} FOMO</span><span class="leader-move ${trendClass(t.m5)}">${t.m5>=0?'+':''}${t.m5.toFixed(1)}%</span></a>`).join('');el.innerHTML=cards+cards;}
+function renderFomoLeaderboard(items){const el=document.querySelector('#fomo-leaderboard');if(!el)return;if(!items.length){el.innerHTML='<span class="leader-loading">Loading live FOMO rankings…</span>';return;}const top=items.slice(0,10);const cards=top.map((t,i)=>`<a class="leader-item" href="${t.url}" target="_blank" rel="noreferrer"><span class="leader-rank">#${i+1}</span><span class="leader-symbol">${t.symbol}</span><span class="leader-score">${t.fomo} FOMO</span><span class="leader-move ${trendClass(t.m5)}">${t.m5>=0?'+':''}${t.m5.toFixed(1)}%</span></a>`).join('');el.innerHTML=cards+cards;}
 async function connectFomoWallet(){const button=document.querySelector('#wallet-button');const provider=window.phantom?.solana||window.solana;if(!provider?.isPhantom){window.open('https://phantom.app/','_blank','noopener,noreferrer');return;}try{const response=await provider.connect();const address=response?.publicKey?.toString?.()||provider.publicKey?.toString?.();if(address&&button){button.textContent=address.slice(0,4)+'…'+address.slice(-4);button.classList.add('connected');button.title=address;}}catch(err){console.error('Wallet connection cancelled:',err);}}
 document.querySelector('#wallet-button')?.addEventListener('click',connectFomoWallet);
+function renderFilteredTokens(){const q=searchValue.trim();let list=tokens;if(activeFilter!=='all')list=list.filter(t=>activeFilter==='trending'?t.fomo>=65:activeFilter==='gainers'?t.h24>0:activeFilter==='new'?t.ageHours<24:true);if(q)list=list.filter(t=>`${t.symbol} ${t.name}`.toLowerCase().includes(q));renderTokens(list);}
 
 function renderTokens(items) {
   if (!tokenList) return;
@@ -144,12 +148,12 @@ async function fetchLiveData() {
 }
 document.querySelectorAll('.filter').forEach(button => button.addEventListener('click', () => {
   document.querySelector('.filter.active')?.classList.remove('active'); button.classList.add('active');
-  const f = button.dataset.filter;
-  renderTokens(f === 'all' ? tokens : tokens.filter(t => f === 'trending' ? t.fomo >= 65 : f === 'gainers' ? t.h24 > 0 : f === 'new' ? t.ageHours < 24 : true));
+  activeFilter = button.dataset.filter || 'all';
+  renderFilteredTokens();
 }));
 document.querySelector('#search')?.addEventListener('input', e => {
-  const value = e.target.value.toLowerCase();
-  renderTokens(tokens.filter(t => `${t.symbol} ${t.name}`.toLowerCase().includes(value)));
+  searchValue = e.target.value.toLowerCase();
+  renderFilteredTokens();
 });
 fetchLiveData();
 setInterval(fetchLiveData, REFRESH_MS);
