@@ -18,6 +18,7 @@ let lastDataRefresh = 0;
 let lastDiscovery = 0;
 let activeFilter = 'all';
 let searchValue = '';
+let socialPosts = [];
 
 let tokens = [];
 
@@ -182,3 +183,20 @@ setInterval(fetchLiveData, REFRESH_MS);
 
 function updateLiveClock(){ const el=document.querySelector('#live-clock'); if(el) el.textContent='LIVE • '+new Date().toLocaleTimeString(); }
 setInterval(updateLiveClock,1000);
+
+async function fetchSocialRadar(){
+  const feed=document.querySelector('#social-feed'), status=document.querySelector('#social-status');
+  if(!feed)return;
+  try{
+    const r=await fetch('/api/twitter',{cache:'no-store'});
+    if(!r.ok) throw new Error('X API '+r.status);
+    const data=await r.json();
+    socialPosts=data.posts||[];
+    feed.innerHTML=socialPosts.slice(0,6).map(p=>`<article class="social-post"><a href="${p.url}" target="_blank" rel="noreferrer"><div class="social-meta"><span><span class="social-author">${p.name}</span> @${p.username}</span><span class="social-score">${p.score} SOCIAL</span></div><p class="social-text">${p.text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p><div class="social-stats">♥ ${p.likes.toLocaleString()} · ↻ ${p.reposts.toLocaleString()} · ↩ ${p.replies.toLocaleString()}<span class="social-tags">${p.tokenHits.join(' ')}</span></div></a></article>`).join('') || '<p class="opportunity-copy">No major Solana posts found yet.</p>';
+    if(status)status.textContent='X LIVE • '+new Date().toLocaleTimeString();
+  }catch(e){
+    if(status)status.textContent='X NOT CONNECTED';
+  }
+}
+fetchSocialRadar();
+setInterval(fetchSocialRadar,10000);
