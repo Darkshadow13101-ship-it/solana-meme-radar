@@ -18,8 +18,4 @@ Serve the folder with:
 python3 -m http.server 8080
 ```
 
-Then open `http://localhost:8080`.
-
-## Data note
-
-Data is provided by Dexscreener. Crypto markets are volatile; Moonwatch shows market information only and is not financial advice.
+Then visit `http://localhost:8080`.

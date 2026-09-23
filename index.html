@@ -30,18 +30,18 @@
       <section class="control-row" aria-label="Token controls">
         <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search token, ticker, or contract" /></label>
         <div class="filters" role="group" aria-label="Filter tokens"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="trending">Trending</button><button class="filter" data-filter="new">New pairs</button><button class="filter" data-filter="gainers">Top gainers</button></div>
-        <button class="filter-button" id="refresh-button" type="button">Refresh <span>↻</span></button>
+        <button class="filter-button">Filter <span>≡</span></button>
       </section>
 
       <section class="stats" aria-label="Market statistics">
-        <article><p>Live pairs tracked</p><strong id="pairs-tracked">—</strong><span>from Dexscreener</span></article>
-        <article><p>New pairs (24h)</p><strong id="new-pairs">—</strong><span>in this live sample</span></article>
-        <article><p>24h pair volume</p><strong id="volume-24h">—</strong><span>across tracked pairs</span></article>
-        <article><p>Hot right now</p><strong class="hot-name" id="hot-token">—</strong><span id="last-updated">Loading live data…</span></article>
+        <article><p>Tokens tracked</p><strong>12,849</strong><span>+214 today</span></article>
+        <article><p>New pairs (24h)</p><strong>1,087</strong><span>+9.2% vs yesterday</span></article>
+        <article><p>Smart money inflow</p><strong>$4.82M</strong><span class="positive">↗ 31.4%</span></article>
+        <article><p>Hot right now</p><strong class="hot-name">$BONK</strong><span>2,491 watching</span></article>
       </section>
 
       <section class="dashboard">
-        <div class="section-heading"><div><p class="eyebrow">MARKET RADAR</p><h2>Tokens on the move</h2></div><span class="live-status" id="live-status" role="status">Connecting to live data…</span></div>
+        <div class="section-heading"><div><p class="eyebrow">MARKET RADAR</p><h2>Tokens on the move</h2></div><button class="text-button">View all tokens <span>→</span></button></div>
         <div class="table-wrap"><table><thead><tr><th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>Volume</th><th>Liquidity</th><th>Signal</th><th></th></tr></thead><tbody id="token-list"></tbody></table></div>
       </section>
 
