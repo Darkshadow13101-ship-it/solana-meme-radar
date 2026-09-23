@@ -1,65 +1,18 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080b12" />
-    <title>Moonwatch — Meme coin radar</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="app-shell">
-      <nav class="topbar" aria-label="Main navigation">
-        <a class="brand" href="#top" aria-label="Moonwatch home"><span class="brand-mark">◒</span>MOONWATCH</a>
-        <div class="network"><span class="live-dot"></span>Solana <span class="chevron">⌄</span></div>
-        <div class="nav-actions"><button class="icon-button" aria-label="Toggle theme">☼</button><button id="wallet-button" class="wallet-button">Connect wallet</button></div>
-      </nav><section class="leaderboard" aria-label="Top 10 FOMO leaderboard"><div class="leaderboard-label"><span class="live-dot"></span>FOMO + AXIOM TOP 10</div><div class="leaderboard-window"><div id="fomo-leaderboard" class="leaderboard-track"></div></div></section>
-
-      <section class="hero" id="top">
-        <div>
-          <p class="eyebrow">LIVE SOLANA MEME COIN INTELLIGENCE</p>
-          <h1>Catch the next<br /><span>big move.</span></h1>
-          <p class="hero-copy">A no-noise radar for the tokens, wallets, and on-chain signals moving right now.</p>
-        </div>
-        <div class="market-pulse"><p>Live Solana pair volume</p><strong id="market-volume">Loading…</strong><span id="market-caption">Fetching market data</span></div>
-      </section>
-
-      <section class="control-row top-search" aria-label="Token search"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search token, ticker, or contract" /></label><button class="search-cta">SEARCH RADAR <span>↗</span></button></section><section class="control-row" aria-label="Token filters">
-        <div class="filters" role="group" aria-label="Filter tokens"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="trending">Trending</button><button class="filter" data-filter="new">New pairs</button><button class="filter" data-filter="gainers">Top gainers</button></div>
-        <button class="filter-button">More filters <span>≡</span></button>
-      </section>
-
-      <section class="quick-nav" aria-label="Radar shortcuts"><a href="#hot">🔥 Hot</a><a href="#breakouts">🚨 Breakouts</a><a href="#early">🆕 Early</a><a href="#risk">🛡️ Risk</a><a href="#market">📊 Market</a></section><section class="stats" aria-label="Market statistics">
-        <article><p>Tokens in radar</p><strong id="stat-tracked">—</strong><span>Live candidates</span></article>
-        <article><p>New pairs in radar</p><strong id="stat-new">—</strong><span>Created within 24h</span></article>
-        <article><p>Radar volume</p><strong id="stat-volume">—</strong><span>24h candidate volume</span></article>
-        <article><p>Hot right now</p><strong id="stat-hot" class="hot-name">—</strong><span id="stat-hot-score">Waiting for live data</span></article>
-      </section>
-
-      <section class="breaking-section" id="breakouts" aria-label="Breaking alerts"><div class="section-heading"><div><p class="eyebrow">BREAKING RADAR</p><h2>🚨 Sudden moves</h2></div><span class="live-status">Auto-detecting</span></div><div id="breaking-feed" class="breaking-feed"><div class="breaking-empty">Watching for sudden moves, volume spikes, and buy pressure…</div></div><div class="breakout-board"><div class="board-title">BREAKOUT BOARD <span>tap a token for intelligence</span></div><div id="breakout-feed" class="breakout-feed"></div></div></section>
-
-      <section class="social-section" id="hot" aria-label="On-chain attention radar"><div class="section-heading"><div><p class="eyebrow">ATTENTION RADAR</p><h2>🔥 Signals moving Solana</h2></div><span class="live-status" id="social-status">On-chain live</span></div><div id="social-feed" class="social-feed"><p class="opportunity-copy">No X key needed — live attention is estimated from on-chain momentum, trades, volume, and buy pressure.</p></div></section>
-
-      <section class="early-section" id="early" aria-label="Early opportunities">
-        <div class="section-heading"><div><p class="eyebrow">FOMO + AXIOM RADAR</p><h2>🔥 Early opportunities</h2><span class="score-legend">FOMO + on-chain attention</span></div><span class="live-status">Top 3 live signals</span></div>
-        <div id="early-opportunities" class="early-grid"></div>
-      </section>
-
-      <section class="dashboard" id="market">
-        <div class="section-heading"><div><p class="eyebrow">MARKET RADAR</p><h2>Tokens on the move</h2></div><button id="view-all-tokens" class="view-all-button">VIEW ALL TOKENS <span>↗</span></button></div>
-        <div class="table-wrap"><table><thead><tr><th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>Volume</th><th>Liquidity</th><th>Signal</th><th></th></tr></thead><tbody id="token-list"></tbody></table></div>
-      </section>
-
-      <section class="lower-grid" id="risk"><article class="panel risk-panel"><div class="panel-heading"><div><p class="eyebrow">RISK SCANNER</p><h2>🛡️ Know the danger</h2></div><span class="live-status">Live flags</span></div><div id="risk-feed" class="risk-feed"></div></article>
-        <article class="panel trade-panel"><div class="panel-heading"><div><p class="eyebrow">WALLET RADAR</p><h2>🐋 Large trades</h2></div><span class="live-status">On-chain</span></div><div id="trade-feed" class="trade-feed"></div></article>
-        <article class="panel activity"><div class="panel-heading"><div><p class="eyebrow">LIVE MARKET</p><h2>Pair activity</h2></div><span class="live-status"><span id="live-clock">LIVE • —</span></div><div id="activity-list"></div><a class="panel-link" href="https://axiom.trade/" target="_blank" rel="noreferrer">Open Axiom Pulse <span>↗</span></a></article>
-        <article class="panel opportunity" id="radar-pick"><p class="eyebrow">WHY IT IS MOVING</p><div id="radar-pick-content"><p class="opportunity-copy">Loading the strongest live pair…</p></div></article>
-      </section>
-      <nav class="mobile-nav" aria-label="Mobile radar navigation"><a href="#hot">🔥<span>Hot</span></a><a href="#breakouts">🚨<span>Alerts</span></a><a href="#early">🆕<span>Early</span></a><a href="#market">📊<span>Market</span></a><a href="#risk">🛡️<span>Risk</span></a></nav><footer>Moonwatch is market intelligence, not financial advice. Always verify a token before trading.</footer>
-    <div id="token-modal" class="token-modal" role="dialog" aria-modal="true" aria-label="Token details"><div class="token-modal-card"><button class="modal-close" data-close-modal aria-label="Close">×</button><p class="eyebrow">TOKEN INTELLIGENCE</p><h2>Live token details</h2><div id="token-modal-body"></div></div></div></main>
-    <script src="app.js"></script>
-  </body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#070b10"><title>Moonwatch — Solana Meme Radar</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body><div class="app-shell">
+<header class="topbar"><a class="brand" href="#top">◒ MOONWATCH</a><div class="network"><i></i>SOLANA <b id="feed-status">CONNECTING</b></div><div class="nav-actions"><button id="refresh-button" class="icon-button">↻</button><button id="wallet-button" class="wallet-button">CONNECT WALLET</button></div></header>
+<section class="leaderboard"><strong><i></i> LIVE RADAR</strong><div id="fomo-leaderboard" class="leaderboard-track">Loading market…</div></section>
+<main id="top"><section class="hero"><div><span class="eyebrow">LIVE SOLANA MEME COIN INTELLIGENCE</span><h1>Catch the next<br><em>big move.</em></h1><p>On-chain momentum, fresh pools, breakouts, large trades, risk signals and breaking crypto news.</p></div><div class="market-pulse"><small>LIVE SOLANA VOLUME</small><strong id="market-volume">—</strong><span id="market-caption">Connecting…</span></div></section>
+<section class="top-search"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search token, ticker, or contract"></label><button id="search-button" class="primary-btn">SEARCH ↗</button></section>
+<nav class="quick-nav"><a href="#hot">HOT</a><a href="#new-radar">NEW</a><a href="#breakouts">BREAKOUTS</a><a href="#trades">WHALES</a><a href="#news">NEWS</a><a href="#risk">RISK</a><a href="#market">MARKET</a></nav>
+<section class="stats"><div><b id="stat-tracked">—</b><span>TRACKED</span></div><div><b id="stat-new">—</b><span>NEW &lt;24H</span></div><div><b id="stat-volume">—</b><span>24H VOLUME</span></div><div><b id="stat-hot">—</b><span>HOT SIGNAL</span></div></section>
+<section id="hot" class="panel"><div class="section-heading"><div><span class="eyebrow">RADAR PICK</span><h2>🔥 Why it is moving</h2><p>Highest combined live on-chain signal.</p></div><span class="live-badge">LIVE</span></div><div id="radar-pick-content" class="panel-body"></div></section>
+<section id="new-radar" class="panel"><div class="section-heading"><div><span class="eyebrow">NEW COIN RADAR</span><h2>🆕 Fresh Solana pools</h2><p>Early pools with activity, liquidity and buy pressure.</p></div><span class="live-badge">LIVE</span></div><div id="new-radar-grid" class="early-grid"></div></section>
+<section id="breakouts" class="panel"><div class="section-heading"><div><span class="eyebrow">BREAKOUT SCANNER</span><h2>🚨 Price acceleration</h2><p>Short-term momentum and transaction velocity.</p></div><span class="live-badge">LIVE</span></div><div id="breakout-feed" class="breakout-feed"></div></section>
+<section id="trades" class="panel"><div class="section-heading"><div><span class="eyebrow">WHALE RADAR</span><h2>🐋 Large on-chain trades</h2><p>Recent trades above the radar threshold.</p></div><span class="live-badge">LIVE</span></div><div id="trade-feed" class="trade-feed"><div class="empty">Watching large trades…</div></div></section>
+<section id="news" class="panel"><div class="section-heading"><div><span class="eyebrow">NEWS RADAR</span><h2>📰 Breaking crypto coverage</h2><p>Fresh headlines from CoinDesk and Cointelegraph.</p></div><span class="live-badge">LIVE</span></div><div id="news-feed" class="news-feed"></div></section>
+<section id="risk" class="panel"><div class="section-heading"><div><span class="eyebrow">RISK SCANNER</span><h2>⚠️ Know the danger</h2><p>Liquidity, age, activity and volume/liquidity stress.</p></div><span class="live-badge">LIVE</span></div><div id="risk-feed" class="risk-feed"></div></section>
+<section id="market" class="panel"><div class="section-heading"><div><span class="eyebrow">LIVE MARKET</span><h2>📊 Solana token board</h2><p id="market-caption-2">Live candidates sorted by radar score.</p></div><button id="view-all-tokens" class="secondary-btn">VIEW ALL ↗</button></div><div class="filters"><button class="filter active" data-filter="all">ALL</button><button class="filter" data-filter="trending">HOT</button><button class="filter" data-filter="new">NEW</button><button class="filter" data-filter="gainers">GAINERS</button></div><div class="table-wrap"><table><thead><tr><th>#</th><th>TOKEN</th><th>PRICE</th><th>1H</th><th>24H</th><th>VOLUME</th><th>LIQUIDITY</th><th>RADAR</th><th></th></tr></thead><tbody id="token-list"><tr><td colspan="9" class="empty">Loading live market…</td></tr></tbody></table></div></section>
+<section class="panel"><div class="section-heading"><div><span class="eyebrow">ACTIVITY</span><h2>⚡ Market pulse</h2></div></div><div id="activity-list" class="activity-list"></div></section></main>
+<div id="token-modal" class="token-modal"><div class="token-modal-card"><button data-close-modal class="modal-close">×</button><span class="eyebrow">TOKEN INTELLIGENCE</span><div id="token-modal-body"></div></div></div>
+<nav class="mobile-nav"><a href="#hot">🔥<small>HOT</small></a><a href="#new-radar">🆕<small>NEW</small></a><a href="#trades">🐋<small>WHALES</small></a><a href="#news">📰<small>NEWS</small></a><a href="#risk">⚠️<small>RISK</small></a></nav>
+<footer>MOONWATCH • SIGNALS ARE MONITORING TOOLS, NOT GUARANTEES • <span id="live-clock">—</span></footer></div><script src="app.js"></script></body></html>
