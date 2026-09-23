@@ -22,7 +22,20 @@ async function market(){
     }catch{}
   }
   const seen=new Set();
-  out=out.filter(x=>!seen.has(x.address)&&seen.add(x.address)).sort((a,b)=>(b.volume+b.liquidity*.15)-(a.volume+a.liquidity*.15)).slice(0,80);
+  const now=Date.now();
+  out=out
+    .filter(x=>x.address&&!seen.has(x.address)&&seen.add(x.address))
+    .filter(x=>x.symbol&&x.symbol!=="SOL"&&x.name.toLowerCase()!=="solana")
+    .filter(x=>x.liquidity>=15000)
+    .filter(x=>x.volume>=100)
+    .filter(x=>x.buys+x.sells>=5)
+    .filter(x=>!x.pairCreatedAt||now-x.pairCreatedAt<=30*24*60*60*1000)
+    .sort((a,b)=>{
+      const activity=x=>Math.log10(1+Math.max(0,x.volume))*18+Math.log10(1+Math.max(0,x.liquidity))*10+Math.min(20,(x.buys+x.sells)/100);
+      const momentum=x=>Math.max(0,x.m5)*5+Math.max(0,x.h1)*2+Math.max(0,x.h24)*.35;
+      return (activity(b)+momentum(b))-(activity(a)+momentum(a));
+    })
+    .slice(0,80);
   if(!out.length)throw Error("No verified Solana market data");
   return {data:out,source:"DEXSCREENER LIVE",updatedAt:new Date().toISOString()};
 }
