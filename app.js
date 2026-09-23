@@ -13,11 +13,16 @@ const socialFeed = document.querySelector('#social-feed');
 const socialStatus = document.querySelector('#social-status');
 const riskFeed = document.querySelector('#risk-feed');
 const breakoutFeed = document.querySelector('#breakout-feed');
+const tradeFeed = document.querySelector('#trade-feed');
+let tokenImages = new Map();
+let tradeRows = [];
+let lastTradeRefresh = 0;
 
 const API = '/api/market';
 const UI_REFRESH_MS = 1000;
 const DATA_REFRESH_MS = 15000;
 const DISCOVERY_REFRESH_MS = 15000;
+const TRADE_REFRESH_MS = 30000;
 
 let lastDataRefresh = 0;
 let lastDiscovery = 0;
@@ -190,7 +195,7 @@ function renderBreaking() {
 function tokenRow(t, i) {
   return `<tr>
     <td>${i + 1}</td>
-    <td><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div></td>
+    <td><div class="token-cell">${avatarMarkup(t)}<span><b>${t.symbol}</b><small>${t.name}</small></span></div></td>
     <td>${fmtUsd(t.price)}</td>
     <td class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</td>
     <td class="${trendClass(t.h24)}">${t.h24 >= 0 ? '+' : ''}${t.h24.toFixed(2)}%</td>
@@ -231,7 +236,7 @@ function renderEarly(items) {
     const buyRatio = Math.round(t.buys / Math.max(1, t.buys + t.sells) * 100);
 
     return `<article class="early-card">
-      <div class="early-head"><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div>
+      <div class="early-head"><div class="token-cell">${avatarMarkup(t)}<span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div>
       <div class="early-score"><strong>${t.combined}</strong><span>/100 RADAR</span></div>
       <div class="score-bar"><span style="width:${t.fomo}%"></span></div>
       <div class="early-metrics"><span><small>AGE</small><b>${age}</b></span><span><small>5M</small><b class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(1)}%</b></span><span><small>1H</small><b class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(1)}%</b></span><span><small>BUYS</small><b>${buyRatio}%</b></span></div>
@@ -303,6 +308,33 @@ function renderBreakoutBoard(items) {
   breakoutFeed.innerHTML = ranked.map(t => `<button class="breakout-card" onclick="window.showToken('${t.address}')"><div><b>${t.symbol}</b><small>${t.signal} • ${t.social} attention</small></div><strong class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(1)}%</strong><span>5M</span></button>`).join('');
 }
 
+async function refreshTradeRadar(items) {
+  if (!tradeFeed || Date.now() - lastTradeRefresh < TRADE_REFRESH_MS) return;
+  lastTradeRefresh = Date.now();
+  const picks = items.filter(t => t.poolAddress).slice(0, 3);
+  try {
+    const responses = await Promise.all(picks.map(t => fetch('/api/trades?pool=' + encodeURIComponent(t.poolAddress), {cache:'no-store'}).then(r => r.ok ? r.json() : null).catch(() => null)));
+    tradeRows = responses.flatMap((data, i) => {
+      const token = picks[i];
+      return (Array.isArray(data?.data) ? data.data : []).map(x => {
+        const a=x.attributes||{};
+        return {token, wallet:a.tx_from_address||'', side:String(a.kind||'trade').toUpperCase(), usd:Number(a.volume_in_usd||0), time:a.block_timestamp, tx:a.tx_hash||''};
+      });
+    }).filter(x => x.wallet && x.usd > 0).sort((a,b)=>b.usd-a.usd).slice(0,8);
+    renderTradeRadar();
+  } catch(e) { console.warn('Trade radar:',e); }
+}
+
+function renderTradeRadar() {
+  if (!tradeFeed) return;
+  tradeFeed.innerHTML = tradeRows.map(r => {
+    const short = r.wallet.slice(0,4)+'…'+r.wallet.slice(-4);
+    const when = r.time ? new Date(r.time).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}) : 'LIVE';
+    const side = r.side === 'BUY' ? 'buy' : 'sell';
+    return `<article class="trade-card"><img class="wallet-avatar" src="${walletAvatar(r.wallet)}" alt="Wallet avatar" loading="lazy"><div class="trade-token">${avatarMarkup(r.token,'small')}<div><b>${r.token.symbol}</b><small>${short}</small></div></div><div class="trade-main"><strong class="${side === 'buy' ? 'gain':'loss'}">${r.side}</strong><b>${fmtCompact(r.usd)}</b><small>${when}</small></div><a class="trade-link" href="https://solscan.io/tx/${r.tx}" target="_blank" rel="noreferrer">↗</a></article>`;
+  }).join('') || '<p class="opportunity-copy">Watching large on-chain trades…</p>';
+}
+
 function renderActivity(items) {
   if (!activityList) return;
 
@@ -364,6 +396,8 @@ async function fetchLiveData() {
 
     const fresh = pools.map(pool => {
       const a = pool?.attributes || {};
+      const poolId = String(pool?.id || '');
+      const poolAddress = poolId.replace(/^solana_/, '').split('_')[0];
       const base = String(pool?.relationships?.base_token?.data?.id || pool?.id || '')
         .replace(/^solana_/, '')
         .trim();
@@ -392,7 +426,7 @@ async function fetchLiveData() {
         url: base ? 'https://axiom.trade/' + base : 'https://axiom.trade/'
       };
 
-      return { address: base, pair: p };
+      return { address: base, poolAddress, pair: p };
     }).filter(x => x.address);
 
     const mapped = fresh.map(r => {
@@ -404,6 +438,7 @@ async function fetchLiveData() {
 
       return {
         address: r.address,
+        poolAddress: r.poolAddress,
         symbol: p.baseToken.symbol,
         name: p.baseToken.name,
         letter: p.baseToken.symbol.slice(0, 1).toUpperCase(),
@@ -444,7 +479,7 @@ async function fetchLiveData() {
     renderBreakoutBoard(tokens);
     renderRiskScanner(tokens);
     renderAttentionRadar();
-    renderTokens(tokens);
+    renderFilteredTokens();
     renderEarly(tokens);
     renderLeader(tokens);
     renderStats(tokens);
@@ -457,6 +492,7 @@ async function fetchLiveData() {
       ratio: Math.round(t.buys / Math.max(1, t.buys + t.sells) * 100)
     })));
     updateLiveClock();
+    refreshTradeRadar(tokens);
   } catch (err) {
     console.error('Moonwatch feed error:', err);
     if (!tokens.length && tokenList) {
