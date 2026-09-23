@@ -1,10 +1,1 @@
-export default async function handler(req,res){
-  res.setHeader('Cache-Control','s-maxage=60, stale-while-revalidate=120');
-  try {
-    const addresses=String(req.query?.addresses||'').split(',').map(x=>x.trim()).filter(Boolean).slice(0,20);
-    if(!addresses.length) return res.status(200).json({data:[]});
-    const url='https://api.geckoterminal.com/api/v2/networks/solana/tokens/multi/'+addresses.join(',');
-    const r=await fetch(url,{headers:{Accept:'application/json;version=20230203'}});
-    const text=await r.text(); if(!r.ok) return res.status(r.status).send(text); res.status(200).send(text);
-  }catch(e){res.status(502).json({error:String(e?.message||e)})}
-}
+export default async function handler(req,res){res.setHeader('Cache-Control','s-maxage=120, stale-while-revalidate=300');try{const a=String(req.query?.addresses||'').split(',').map(x=>x.trim()).filter(Boolean).slice(0,20);if(!a.length)return res.status(200).json({data:[]});const c=new AbortController(),tm=setTimeout(()=>c.abort(),7000),r=await fetch('https://api.geckoterminal.com/api/v2/networks/solana/tokens/multi/'+a.join(','),{headers:{Accept:'application/json;version=20230203'},signal:c.signal});clearTimeout(tm);const text=await r.text();return r.ok?res.status(200).send(text):res.status(r.status).send(text)}catch(e){return res.status(502).json({error:String(e?.message||e)})}}
