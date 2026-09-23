@@ -136,21 +136,34 @@ function detectBreakouts(items) {
 
   items.forEach(t => {
     const prev = previousTokens.get(t.symbol);
-    if (!prev) return;
+    const move5m = Number(t.m5 || 0);
+    const moveDelta = prev ? move5m - Number(prev.m5 || 0) : 0;
+    const volumeJump = prev?.volume > 0 ? Number(t.volume) / Number(prev.volume) : 0;
+    const socialJump = prev ? Number(t.social || 0) - Number(prev.social || 0) : 0;
 
-    const move = Number(t.m5) - Number(prev.m5);
-    const volumeJump = prev.volume > 0 ? Number(t.volume) / Number(prev.volume) : 0;
-    if (move >= 6 || volumeJump >= 2.5 || (t.social >= 75 && prev.social < 75)) {
+    if (
+      move5m >= 2.5 ||
+      moveDelta >= 1.25 ||
+      volumeJump >= 1.75 ||
+      socialJump >= 20
+    ) {
       events.push({
         symbol: t.symbol,
-        move: move.toFixed(1),
+        move: move5m.toFixed(1),
+        delta: moveDelta.toFixed(1),
         social: t.social,
         score: t.combined
       });
     }
   });
 
-  if (events.length) breakingEvents = events.slice(0, 5).map(e => ({ ...e, at: now }));
+  if (events.length) {
+    const fresh = events.slice(0, 5).map(e => ({ ...e, at: now }));
+    const existing = breakingEvents.filter(e => now - e.at < 30000);
+    const seen = new Set(existing.map(e => e.symbol));
+    breakingEvents = [...existing, ...fresh.filter(e => !seen.has(e.symbol))].slice(0, 5);
+  }
+
   previousTokens = new Map(items.map(t => [
     t.symbol,
     { m5: t.m5, volume: t.volume, social: t.social }
@@ -163,7 +176,7 @@ function renderBreaking() {
 
   breakingEvents = breakingEvents.filter(e => Date.now() - e.at < 90000);
   el.innerHTML = breakingEvents.map(e =>
-    `<article class="breaking-item"><span class="breaking-icon">🚨</span><div><b>${e.symbol}</b> <span>BREAKOUT DETECTED</span><small>Momentum +${e.move}% • Social ${e.social} • Radar ${e.score}</small></div></article>`
+    `<article class="breaking-item"><span class="breaking-icon">🚨</span><div><b>${e.symbol}</b> <span>BREAKOUT DETECTED</span><small>5m +${e.move}% • Accel +${e.delta || "0.0"}% • Social ${e.social} • Radar ${e.score}</small></div></article>`
   ).join('') || '<div class="breaking-empty">Watching for sudden moves, volume spikes, and social acceleration…</div>';
 }
 
@@ -330,6 +343,7 @@ async function fetchLiveData() {
           priceUsd: a.base_token_price_usd,
           priceChange: {
             m5: a.price_change_percentage?.m5,
+            m15: a.price_change_percentage?.m15,
             h1: a.price_change_percentage?.h1,
             h24: a.price_change_percentage?.h24
           },
@@ -451,8 +465,21 @@ async function fetchSocialRadar() {
     if (socialStatus) socialStatus.textContent = 'X LIVE • ' + new Date().toLocaleTimeString();
   } catch (e) {
     console.error('Moonwatch X radar error:', e);
-    if (socialStatus) socialStatus.textContent = 'X NOT CONNECTED';
-    if (socialFeed) socialFeed.innerHTML = '<p class="opportunity-copy">X radar is waiting for a valid X API connection.</p>';
+    const msg = String(e?.message || e || '');
+    const status = msg.includes('not configured')
+      ? 'X TOKEN MISSING'
+      : (msg.includes('401') || msg.includes('403') || msg.includes('Unauthorized') || msg.includes('Invalid'))
+        ? 'X TOKEN REJECTED'
+        : 'X API ERROR';
+    if (socialStatus) socialStatus.textContent = status;
+    if (socialFeed) socialFeed.innerHTML =
+      '<p class="opportunity-copy">' +
+      (status === 'X TOKEN MISSING'
+        ? 'Add X_BEARER_TOKEN to Vercel Production, then redeploy.'
+        : status === 'X TOKEN REJECTED'
+          ? 'The X bearer token was rejected. Replace it with a fresh Bearer Token.'
+          : 'X could not be reached. Check the deployment logs and X API access.') +
+      '</p>';
   }
 }
 
