@@ -12,7 +12,7 @@ const marketCaption = document.querySelector('#market-caption');
 const socialFeed = document.querySelector('#social-feed');
 const socialStatus = document.querySelector('#social-status');
 
-const API = 'https://api.geckoterminal.com/api/v2';
+const API = '/api/market';
 const UI_REFRESH_MS = 1000;
 const DATA_REFRESH_MS = 15000;
 const DISCOVERY_REFRESH_MS = 15000;
@@ -295,7 +295,7 @@ async function getJson(path) {
   const timeout = setTimeout(() => controller.abort(), 7000);
 
   try {
-    const res = await fetch(API + path, { cache: 'no-store', signal: controller.signal });
+    const res = await fetch(API, { cache: 'no-store', signal: controller.signal });
     if (!res.ok) throw new Error(path + ' -> ' + res.status);
     return await res.json();
   } finally {
@@ -311,7 +311,7 @@ async function fetchLiveData() {
 
     // Use GeckoTerminal's trending pool payload directly.
     // The public API is rate-limited, so avoid making one request per token.
-    const data = await getJson('/networks/solana/trending_pools?page=1');
+    const data = await getJson('');
     const pools = Array.isArray(data?.data) ? data.data.slice(0, 20) : [];
 
     const fresh = pools.map(pool => {
