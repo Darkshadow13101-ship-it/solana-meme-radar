@@ -308,6 +308,25 @@ function renderBreakoutBoard(items) {
   breakoutFeed.innerHTML = ranked.map(t => `<button class="breakout-card" onclick="window.showToken('${t.address}')"><div><b>${t.symbol}</b><small>${t.signal} • ${t.social} attention</small></div><strong class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(1)}%</strong><span>5M</span></button>`).join('');
 }
 
+async function refreshTokenImages(items) {
+  const missing = items.map(t=>t.address).filter(Boolean).filter(a=>!tokenImages.has(a));
+  if (!missing.length) return;
+  try {
+    const res = await fetch('/api/token-info?addresses=' + missing.slice(0,20).join(','), {cache:'no-store'});
+    if (!res.ok) return;
+    const data = await res.json();
+    (data.data || []).forEach(x => {
+      const address = x?.attributes?.address || String(x?.id || '').replace(/^solana_/,'');
+      const image = x?.attributes?.image_url;
+      if (address && image) tokenImages.set(address, image);
+    });
+    renderFilteredTokens();
+    renderEarly(tokens);
+    refreshTokenImages(tokens);
+    renderRiskScanner(tokens);
+  } catch(e) { console.warn('Token image radar:', e); }
+}
+
 async function refreshTradeRadar(items) {
   if (!tradeFeed || Date.now() - lastTradeRefresh < TRADE_REFRESH_MS) return;
   lastTradeRefresh = Date.now();
