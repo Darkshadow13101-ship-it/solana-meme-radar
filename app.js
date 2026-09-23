@@ -416,9 +416,10 @@ async function fetchLiveData() {
 async function fetchSocialRadar() {
   if (!socialFeed) return;
 
+  let data = {};
   try {
     const r = await fetch('/api/twitter', { cache: 'no-store' });
-    const data = await r.json();
+    data = await r.json();
 
     if (!r.ok) {
       const detail = data?.error || ('X API ' + r.status);
