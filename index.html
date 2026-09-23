@@ -34,10 +34,15 @@
       </section>
 
       <section class="stats" aria-label="Market statistics">
-        <article><p>Tokens tracked</p><strong>12,849</strong><span>+214 today</span></article>
-        <article><p>New pairs (24h)</p><strong>1,087</strong><span>+9.2% vs yesterday</span></article>
-        <article><p>Smart money inflow</p><strong>$4.82M</strong><span class="positive">↗ 31.4%</span></article>
-        <article><p>Hot right now</p><strong class="hot-name">$BONK</strong><span>2,491 watching</span></article>
+        <article><p>Tokens in radar</p><strong id="stat-tracked">—</strong><span>Live candidates</span></article>
+        <article><p>New pairs in radar</p><strong id="stat-new">—</strong><span>Created within 24h</span></article>
+        <article><p>Radar volume</p><strong id="stat-volume">—</strong><span>24h candidate volume</span></article>
+        <article><p>Hot right now</p><strong id="stat-hot" class="hot-name">—</strong><span id="stat-hot-score">Waiting for live data</span></article>
+      </section>
+
+      <section class="early-section" aria-label="Early opportunities">
+        <div class="section-heading"><div><p class="eyebrow">FOMO RADAR</p><h2>🔥 Early opportunities</h2></div><span class="live-status">Top 3 live signals</span></div>
+        <div id="early-opportunities" class="early-grid"></div>
       </section>
 
       <section class="dashboard">
