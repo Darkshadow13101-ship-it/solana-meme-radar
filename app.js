@@ -458,7 +458,8 @@ async function fetchSocialRadar() {
       (status === 'X TOKEN MISSING'
         ? 'Add X_BEARER_TOKEN to Vercel Production, then redeploy.'
         : status === 'X TOKEN REJECTED'
-          ? 'The X bearer token was rejected. Replace it with a fresh Bearer Token.'
+          ? 'X rejected the credential. ' + (data?.error || 'Replace the Bearer Token and redeploy.') +
+            (data?.hint ? '<br><small>' + String(data.hint).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</small>' : '')
           : 'X could not be reached. Check the deployment logs and X API access.') +
       '</p>';
   }
