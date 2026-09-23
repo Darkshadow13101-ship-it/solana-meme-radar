@@ -33,32 +33,32 @@
         <button class="filter-button">Filter <span>≡</span></button>
       </section>
 
-      <section class="stats" aria-label="Market statistics">
+      <section class="quick-nav" aria-label="Radar shortcuts"><a href="#hot">🔥 Hot</a><a href="#breakouts">🚨 Breakouts</a><a href="#early">🆕 Early</a><a href="#risk">🛡️ Risk</a><a href="#market">📊 Market</a></section><section class="stats" aria-label="Market statistics">
         <article><p>Tokens in radar</p><strong id="stat-tracked">—</strong><span>Live candidates</span></article>
         <article><p>New pairs in radar</p><strong id="stat-new">—</strong><span>Created within 24h</span></article>
         <article><p>Radar volume</p><strong id="stat-volume">—</strong><span>24h candidate volume</span></article>
         <article><p>Hot right now</p><strong id="stat-hot" class="hot-name">—</strong><span id="stat-hot-score">Waiting for live data</span></article>
       </section>
 
-      <section class="breaking-section" aria-label="Breaking alerts"><div class="section-heading"><div><p class="eyebrow">BREAKING RADAR</p><h2>🚨 Sudden moves</h2></div><span class="live-status">Auto-detecting</span></div><div id="breaking-feed" class="breaking-feed"><div class="breaking-empty">Watching for sudden moves, volume spikes, and social acceleration…</div></div></section>
+      <section class="breaking-section" id="breakouts" aria-label="Breaking alerts"><div class="section-heading"><div><p class="eyebrow">BREAKING RADAR</p><h2>🚨 Sudden moves</h2></div><span class="live-status">Auto-detecting</span></div><div id="breaking-feed" class="breaking-feed"><div class="breaking-empty">Watching for sudden moves, volume spikes, and social acceleration…</div></div></section>
 
-      <section class="social-section" aria-label="On-chain attention radar"><div class="section-heading"><div><p class="eyebrow">ATTENTION RADAR</p><h2>🔥 Signals moving Solana</h2></div><span class="live-status" id="social-status">On-chain live</span></div><div id="social-feed" class="social-feed"><p class="opportunity-copy">No X key needed — live attention is estimated from on-chain momentum, trades, volume, and buy pressure.</p></div></section>
+      <section class="social-section" id="hot" aria-label="On-chain attention radar"><div class="section-heading"><div><p class="eyebrow">ATTENTION RADAR</p><h2>🔥 Signals moving Solana</h2></div><span class="live-status" id="social-status">On-chain live</span></div><div id="social-feed" class="social-feed"><p class="opportunity-copy">No X key needed — live attention is estimated from on-chain momentum, trades, volume, and buy pressure.</p></div></section>
 
-      <section class="early-section" aria-label="Early opportunities">
+      <section class="early-section" id="early" aria-label="Early opportunities">
         <div class="section-heading"><div><p class="eyebrow">FOMO + AXIOM RADAR</p><h2>🔥 Early opportunities</h2><span class="score-legend">FOMO + on-chain attention</span></div><span class="live-status">Top 3 live signals</span></div>
         <div id="early-opportunities" class="early-grid"></div>
       </section>
 
-      <section class="dashboard">
+      <section class="dashboard" id="market">
         <div class="section-heading"><div><p class="eyebrow">MARKET RADAR</p><h2>Tokens on the move</h2></div><button class="text-button">View all tokens <span>→</span></button></div>
         <div class="table-wrap"><table><thead><tr><th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>Volume</th><th>Liquidity</th><th>Signal</th><th></th></tr></thead><tbody id="token-list"></tbody></table></div>
       </section>
 
-      <section class="lower-grid">
+      <section class="lower-grid" id="risk">
         <article class="panel activity"><div class="panel-heading"><div><p class="eyebrow">LIVE MARKET</p><h2>Pair activity</h2></div><span class="live-status"><span id="live-clock">LIVE • —</span></div><div id="activity-list"></div><a class="panel-link" href="https://axiom.trade/" target="_blank" rel="noreferrer">Open Axiom Pulse <span>↗</span></a></article>
-        <article class="panel opportunity" id="radar-pick"><p class="eyebrow">LIVE MARKET LEADER</p><div id="radar-pick-content"><p class="opportunity-copy">Loading the strongest live pair…</p></div></article>
+        <article class="panel opportunity" id="radar-pick"><p class="eyebrow">WHY IT IS MOVING</p><div id="radar-pick-content"><p class="opportunity-copy">Loading the strongest live pair…</p></div></article>
       </section>
-      <footer>Moonwatch is a market intelligence tool, not financial advice. Always do your own research.</footer>
+      <nav class="mobile-nav" aria-label="Mobile radar navigation"><a href="#hot">🔥<span>Hot</span></a><a href="#breakouts">🚨<span>Alerts</span></a><a href="#early">🆕<span>Early</span></a><a href="#market">📊<span>Market</span></a><a href="#risk">🛡️<span>Risk</span></a></nav><footer>Moonwatch is market intelligence, not financial advice. Always verify a token before trading.</footer>
     </main>
     <script src="app.js"></script>
   </body>
