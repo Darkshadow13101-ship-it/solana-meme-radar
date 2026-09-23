@@ -21,7 +21,6 @@ let lastDataRefresh = 0;
 let lastDiscovery = 0;
 let activeFilter = 'all';
 let searchValue = '';
-let socialPosts = [];
 let previousTokens = new Map();
 let breakingEvents = [];
 let tokens = [];
@@ -104,16 +103,22 @@ function riskLabel(r) {
 }
 
 function socialScoreForToken(t) {
-  if (!socialPosts.length) return 0;
-  const symbol = String(t.symbol || '').toLowerCase();
-  const name = String(t.name || '').toLowerCase();
+  const m5 = Number(t?.m5 || 0);
+  const h1 = Number(t?.h1 || 0);
+  const vol = Number(t?.volume || 0);
+  const liq = Number(t?.liquidity || 0);
+  const buys = Number(t?.buys || 0);
+  const sells = Number(t?.sells || 0);
+  const tx = buys + sells;
+  const buyRatio = tx ? buys / tx : 0.5;
 
-  return Math.max(0, ...socialPosts.map(p => {
-    const text = String(p.text || '').toLowerCase();
-    const tickerHit = (p.tokenHits || []).some(x => x.toLowerCase() === '$' + symbol);
-    const nameHit = name.length >= 3 && text.includes(name);
-    return tickerHit || nameHit ? Number(p.score || 0) : 0;
-  }));
+  // X-free attention proxy: only uses the live on-chain market feed.
+  const momentum = Math.max(0, Math.min(45, m5 * 4 + h1 * 0.8));
+  const pressure = Math.max(0, Math.min(25, (buyRatio - 0.5) * 50));
+  const activity = Math.min(20, Math.log10(Math.max(1, tx)) * 5);
+  const turnover = liq > 0 ? Math.min(10, (vol / liq) * 0.5) : 0;
+
+  return Math.max(0, Math.min(100, Math.round(momentum + pressure + activity + turnover)));
 }
 
 function combinedScore(t) {
@@ -176,8 +181,8 @@ function renderBreaking() {
 
   breakingEvents = breakingEvents.filter(e => Date.now() - e.at < 90000);
   el.innerHTML = breakingEvents.map(e =>
-    `<article class="breaking-item"><span class="breaking-icon">🚨</span><div><b>${e.symbol}</b> <span>BREAKOUT DETECTED</span><small>5m +${e.move}% • Accel +${e.delta || "0.0"}% • Social ${e.social} • Radar ${e.score}</small></div></article>`
-  ).join('') || '<div class="breaking-empty">Watching for sudden moves, volume spikes, and social acceleration…</div>';
+    `<article class="breaking-item"><span class="breaking-icon">🚨</span><div><b>${e.symbol}</b> <span>BREAKOUT DETECTED</span><small>5m +${e.move}% • Accel +${e.delta || "0.0"}% • Attention ${e.social} • Radar ${e.score}</small></div></article>`
+  ).join('') || '<div class="breaking-empty">Watching for sudden moves, volume spikes, and buy pressure…</div>';
 }
 
 function tokenRow(t, i) {
@@ -393,6 +398,7 @@ async function fetchLiveData() {
     tokens = mapped.sort((a, b) => b.combined - a.combined);
 
     renderBreaking();
+    renderAttentionRadar();
     renderTokens(tokens);
     renderEarly(tokens);
     renderLeader(tokens);
@@ -509,7 +515,5 @@ async function connectFomoWallet() {
 document.querySelector('#wallet-button')?.addEventListener('click', connectFomoWallet);
 
 fetchLiveData();
-fetchSocialRadar();
 setInterval(fetchLiveData, UI_REFRESH_MS);
-setInterval(fetchSocialRadar, 10000);
 setInterval(updateLiveClock, 1000);
