@@ -12,7 +12,9 @@ const marketCaption = document.querySelector('#market-caption');
 
 const API = 'https://api.geckoterminal.com/api/v2';
 const REFRESH_MS = 1000;
+const DATA_REFRESH_MS = 5000;
 const DISCOVERY_REFRESH_MS = 15000;
+let lastDataRefresh = 0;
 let lastDiscovery = 0;
 let activeFilter = 'all';
 let searchValue = '';
@@ -120,6 +122,8 @@ async function getJson(path) {
 async function fetchLiveData() {
   try {
     const now = Date.now();
+    if (now - lastDataRefresh < DATA_REFRESH_MS && tokens.length) return;
+    lastDataRefresh = now;
     let candidates = window.__moonwatchCandidates || [];
     if (!candidates.length || now - lastDiscovery >= DISCOVERY_REFRESH_MS) {
       const data = await getJson('/networks/solana/trending_pools?page=1');
@@ -138,7 +142,7 @@ async function fetchLiveData() {
         priceUsd: a.base_token_price_usd, priceChange: { m5: a.price_change_percentage?.m5, h1: a.price_change_percentage?.h1, h24: a.price_change_percentage?.h24 },
         volume: { m5: a.volume_usd?.m5, h1: a.volume_usd?.h1, h24: a.volume_usd?.h24 },
         liquidity: { usd: a.reserve_in_usd }, txns: { m5: { buys: a.transactions?.m5?.buys, sells: a.transactions?.m5?.sells }, h1: { buys: a.transactions?.h1?.buys, sells: a.transactions?.h1?.sells }, h24: { buys: a.transactions?.h24?.buys, sells: a.transactions?.h24?.sells } }, pairCreatedAt: a.pool_created_at ? Date.parse(a.pool_created_at) : undefined,
-        url: 'https://axiom.trade/meme/' + base
+        url: 'https://axiom.trade/' + base
       } : null };
     }));
     const fresh = results.filter(r => r.status === 'fulfilled' && r.value.pair).map(r => {
@@ -157,7 +161,7 @@ async function fetchLiveData() {
     }).sort((a, b) => b.fomo - a.fomo);
     if (!fresh.length) throw new Error('No live Solana pairs returned');
     tokens = fresh;
-    renderTokens(tokens); renderEarly(tokens); renderLeader(tokens); renderStats(tokens); renderMarket(tokens); renderFomoLeaderboard(tokens);
+    renderTokens(tokens); renderEarly(tokens); renderLeader(tokens); renderStats(tokens); renderMarket(tokens); renderFomoLeaderboard(tokens); updateLiveClock();
     renderActivity(tokens.map(t => ({ symbol: t.symbol, side: t.buys >= t.sells ? 'buy-heavy' : 'sell-heavy', count: t.buys + t.sells, ratio: Math.round(t.buys / Math.max(1, t.buys + t.sells) * 100) })));
   } catch (err) {
     console.error('Moonwatch feed error:', err);
@@ -175,3 +179,6 @@ document.querySelector('#search')?.addEventListener('input', e => {
 });
 fetchLiveData();
 setInterval(fetchLiveData, REFRESH_MS);
+
+function updateLiveClock(){ const el=document.querySelector('#live-clock'); if(el) el.textContent='LIVE • '+new Date().toLocaleTimeString(); }
+setInterval(updateLiveClock,1000);
