@@ -14,3 +14,27 @@
 .breaking-section{border:1px solid #3a2026;border-radius:17px;background:linear-gradient(145deg,#120b0f,#090b10);overflow:hidden;margin:0 0 20px}.breaking-feed{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#2a1a20}.breaking-item{background:#0d0d12;padding:15px 18px;display:flex;gap:12px;align-items:flex-start}.breaking-icon{font-size:18px}.breaking-item b{font-size:11px}.breaking-item span{font-family:"DM Mono";font-size:8px;color:#ff7587}.breaking-item small{display:block;color:#778293;font-family:"DM Mono";font-size:8px;margin-top:6px}.breaking-empty{padding:17px 20px;color:#687385;font-family:"DM Mono";font-size:8px}.score-legend{font-family:"DM Mono";font-size:8px;color:var(--green);border:1px solid rgba(82,216,255,.18);padding:6px 9px;border-radius:999px}@media(max-width:750px){.breaking-feed{grid-template-columns:1fr}.score-legend{display:none}}
 
 .risk-mini{font-family:"DM Mono";font-size:7px;color:#ff8797;margin-left:5px;opacity:.9}.signal{gap:4px}
+
+/* MOONWATCH OVERHAUL */
+.quick-nav{display:flex;gap:8px;overflow:auto;padding:8px;margin:0 0 18px;border:1px solid #202530;border-radius:14px;background:rgba(8,10,14,.92);position:sticky;top:76px;z-index:12;backdrop-filter:blur(18px)}
+.quick-nav a{flex:0 0 auto;text-decoration:none;color:#8e99aa;font:700 9px 'DM Mono';padding:9px 12px;border:1px solid #202630;border-radius:9px}
+.quick-nav a:first-child{color:#08100a;background:var(--green);border-color:var(--green)}
+.breaking-section,.social-section,.early-section,.dashboard,.lower-grid{scroll-margin-top:105px}
+.risk-mini{display:block;margin:5px 0 0}
+.early-card{box-shadow:inset 0 0 0 1px rgba(255,255,255,.015)}
+.social-post{min-height:128px}
+.mobile-nav{display:none}
+@media(max-width:750px){
+ .app-shell{padding-bottom:78px}
+ .quick-nav{top:68px}
+ .quick-nav a{padding:10px 13px}
+ .stats{margin-bottom:28px}
+ .hero-copy{font-size:13px}
+ .market-pulse strong{font-size:29px}
+ .mobile-nav{display:flex;position:fixed;left:10px;right:10px;bottom:10px;height:60px;z-index:50;background:rgba(9,12,17,.94);border:1px solid #29313e;border-radius:17px;backdrop-filter:blur(22px);box-shadow:0 15px 45px rgba(0,0,0,.55)}
+ .mobile-nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-decoration:none;color:#8994a6;font:700 7px 'DM Mono'}
+ .mobile-nav a:first-child{color:var(--green)}
+ .mobile-nav a span{font-size:7px;letter-spacing:.5px}
+ .breaking-item{padding:14px}
+ .social-post{padding:15px}
+}
