@@ -65,6 +65,10 @@ function signalFor(score, p) {
 function tokenRow(t, i) {
   return `<tr><td>${i + 1}</td><td><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div></td><td>${fmtUsd(t.price)}</td><td class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</td><td class="${trendClass(t.h24)}">${t.h24 >= 0 ? '+' : ''}${t.h24.toFixed(2)}%</td><td>${fmtCompact(t.volume)}</td><td>${fmtCompact(t.liquidity)}</td><td><span class="signal ${t.signal.toLowerCase()}">${t.signal} ${t.fomo}</span></td><td><button class="star" aria-label="Open ${t.symbol}" onclick="window.open('${t.url}','_blank')">↗</button></td></tr>`;
 }
+function renderFomoLeaderboard(items){const el=document.querySelector('#fomo-leaderboard');if(!el||!items.length)return;const top=items.slice(0,10);const cards=top.map((t,i)=>`<a class="leader-item" href="${t.url}" target="_blank" rel="noreferrer"><span class="leader-rank">#${i+1}</span><span class="leader-symbol">${t.symbol}</span><span class="leader-score">${t.fomo} FOMO</span><span class="leader-move ${trendClass(t.m5)}">${t.m5>=0?'+':''}${t.m5.toFixed(1)}%</span></a>`).join('');el.innerHTML=cards+cards;}
+async function connectFomoWallet(){const button=document.querySelector('#wallet-button');const provider=window.phantom?.solana||window.solana;if(!provider?.isPhantom){window.open('https://phantom.app/','_blank','noopener,noreferrer');return;}try{const response=await provider.connect();const address=response?.publicKey?.toString?.()||provider.publicKey?.toString?.();if(address&&button){button.textContent=address.slice(0,4)+'…'+address.slice(-4);button.classList.add('connected');button.title=address;}}catch(err){console.error('Wallet connection cancelled:',err);}}
+document.querySelector('#wallet-button')?.addEventListener('click',connectFomoWallet);
+
 function renderTokens(items) {
   if (!tokenList) return;
   tokenList.innerHTML = items.map(tokenRow).join('') || '<tr><td colspan="9">No live tokens matched your search.</td></tr>';
@@ -131,7 +135,7 @@ async function fetchLiveData() {
     }).sort((a, b) => b.fomo - a.fomo);
     if (!fresh.length) throw new Error('No live Solana pairs returned');
     tokens = fresh;
-    renderTokens(tokens); renderEarly(tokens); renderLeader(tokens); renderStats(tokens); renderMarket(tokens);
+    renderTokens(tokens); renderEarly(tokens); renderLeader(tokens); renderStats(tokens); renderMarket(tokens); renderFomoLeaderboard(tokens);
     renderActivity(tokens.map(t => ({ symbol: t.symbol, side: t.buys >= t.sells ? 'buy-heavy' : 'sell-heavy', count: t.buys + t.sells, ratio: Math.round(t.buys / Math.max(1, t.buys + t.sells) * 100) })));
   } catch (err) {
     console.error('Moonwatch feed error:', err);
