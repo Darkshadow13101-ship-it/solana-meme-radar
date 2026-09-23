@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080b12" />
+    <title>Moonwatch — Meme coin radar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <nav class="topbar" aria-label="Main navigation">
+        <a class="brand" href="#top" aria-label="Moonwatch home"><span class="brand-mark">◒</span>MOONWATCH</a>
+        <div class="network"><span class="live-dot"></span>Solana <span class="chevron">⌄</span></div>
+        <div class="nav-actions"><button class="icon-button" aria-label="Toggle theme">☼</button><button class="wallet-button">Connect wallet</button></div>
+      </nav>
+
+      <section class="hero" id="top">
+        <div>
+          <p class="eyebrow">LIVE SOLANA MEME COIN INTELLIGENCE</p>
+          <h1>Catch the next<br /><span>big green candle.</span></h1>
+          <p class="hero-copy">A no-noise radar for the tokens, wallets, and on-chain signals moving right now.</p>
+        </div>
+        <div class="market-pulse"><p>Live Solana pair volume</p><strong id="market-volume">Loading…</strong><span id="market-caption">Fetching market data</span></div>
+      </section>
+
+      <section class="control-row" aria-label="Token controls">
+        <label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search token, ticker, or contract" /></label>
+        <div class="filters" role="group" aria-label="Filter tokens"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="trending">Trending</button><button class="filter" data-filter="new">New pairs</button><button class="filter" data-filter="gainers">Top gainers</button></div>
+        <button class="filter-button" id="refresh-button" type="button">Refresh <span>↻</span></button>
+      </section>
+
+      <section class="stats" aria-label="Market statistics">
+        <article><p>Live pairs tracked</p><strong id="pairs-tracked">—</strong><span>from Dexscreener</span></article>
+        <article><p>New pairs (24h)</p><strong id="new-pairs">—</strong><span>in this live sample</span></article>
+        <article><p>24h pair volume</p><strong id="volume-24h">—</strong><span>across tracked pairs</span></article>
+        <article><p>Hot right now</p><strong class="hot-name" id="hot-token">—</strong><span id="last-updated">Loading live data…</span></article>
+      </section>
+
+      <section class="dashboard">
+        <div class="section-heading"><div><p class="eyebrow">MARKET RADAR</p><h2>Tokens on the move</h2></div><span class="live-status" id="live-status" role="status">Connecting to live data…</span></div>
+        <div class="table-wrap"><table><thead><tr><th>#</th><th>Token</th><th>Price</th><th>1h</th><th>24h</th><th>Volume</th><th>Liquidity</th><th>Signal</th><th></th></tr></thead><tbody id="token-list"></tbody></table></div>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel activity"><div class="panel-heading"><div><p class="eyebrow">LIVE MARKET</p><h2>Pair activity</h2></div><span class="live-status">Live feed</span></div><div id="activity-list"></div><a class="panel-link" href="https://dexscreener.com/solana" target="_blank" rel="noreferrer">Explore Solana pairs <span>↗</span></a></article>
+        <article class="panel opportunity" id="radar-pick"><p class="eyebrow">LIVE MARKET LEADER</p><div id="radar-pick-content"><p class="opportunity-copy">Loading the strongest live pair…</p></div></article>
+      </section>
+      <footer>Moonwatch is a market intelligence tool, not financial advice. Always do your own research.</footer>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
