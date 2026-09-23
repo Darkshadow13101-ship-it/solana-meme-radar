@@ -1,5 +1,12 @@
 const tokenList = document.querySelector('#token-list');
 const activityList = document.querySelector('#activity-list');
+const earlyOpportunities = document.querySelector('#early-opportunities');
+const radarPickContent = document.querySelector('#radar-pick-content');
+const statTracked = document.querySelector('#stat-tracked');
+const statNew = document.querySelector('#stat-new');
+const statVolume = document.querySelector('#stat-volume');
+const statHot = document.querySelector('#stat-hot');
+const statHotScore = document.querySelector('#stat-hot-score');
 
 const API = 'https://api.dexscreener.com';
 const REFRESH_MS = 30000;
@@ -83,6 +90,127 @@ function renderTokens(items) {
     </tr>`).join('') || '<tr><td colspan="9">No live tokens matched your search.</td></tr>';
 }
 
+function renderEarly(items) {
+  if (!earlyOpportunities) return;
+  earlyOpportunities.innerHTML = items.slice(0, 3).map(t => {
+    const age = t.ageHours < 1 ? Math.max(1, Math.round(t.ageHours * 60)) + 'm' : Math.round(t.ageHours) + 'h';
+    const buyRatio = Math.round((t.buys / Math.max(1, t.buys + t.sells)) * 100);
+    return `<article class="early-card"><div class="early-head"><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div><div class="early-score"><strong>${t.fomo}</strong><span>/100 FOMO</span></div><div class="score-bar"><span style="width:${t.fomo}%"></span></div><div class="early-metrics"><span><small>AGE</small><b>${age}</b></span><span><small>5M</small><b class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(1)}%</b></span><span><small>1H</small><b class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(1)}%</b></span><span><small>BUYS</small><b>${buyRatio}%</b></span></div><button class="watch-button" onclick="window.open('${t.url}','_blank')">Open on Dexscreener <span>↗</span></button></article>`;
+  }).join('') || '<p class="opportunity-copy">Waiting for live candidates…</p>';
+}
+function renderLeader(items) {
+  if (!radarPickContent || !items.length) return;
+  const t = items[0];
+  const buyRatio = Math.round((t.buys / Math.max(1, t.buys + t.sells)) * 100);
+  radarPickContent.innerHTML = `<div class="opportunity-top"><span class="token-avatar ${t.color}">${t.letter}</span><div><h3 class="token-title">${t.symbol}</h3><p class="muted">${t.name}</p></div><div class="score">${t.fomo}<small>/100</small></div></div><div class="score-bar"><span style="width:${t.fomo}%"></span></div><p class="opportunity-copy">Top live radar signal based on fresh momentum, volume acceleration, transaction activity, buy pressure, liquidity and pair age. Signal only — not a prediction.</p><div class="opportunity-metrics"><div><span>5m move</span><strong class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(2)}%</strong></div><div><span>1h move</span><strong class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</strong></div><div><span>Liquidity</span><strong>${fmtCompact(t.liquidity)}</strong></div><div><span>Buy ratio</span><strong>${buyRatio}%</strong></div></div><button class="watch-button" onclick="window.open('${t.url}','_blank')">Open live pair <span>↗</span></button>`;
+}
+function renderStats(items) {
+  if (!items.length) return;
+  if (statTracked) statTracked.textContent = items.length;
+  if (statNew) statNew.textContent = items.filter(t => t.ageHours < 24).length;
+  if (statVolume) statVolume.textContent = fmtCompact(items.reduce((s,t) => s + t.volume, 0));
+  if (statHot) statHot.textContent = '
+  if (!activityList) return;
+  activityList.innerHTML = items.slice(0, 6).map((a, i) => `
+    <div class="activity-item">
+      <span class="token-avatar activity-avatar">${i + 1}</span>
+      <div class="activity-text"><b>${a.symbol}</b> ${a.side} <b>${a.count}</b> trades<br><span class="${a.side === 'buy-heavy' ? 'gain' : 'loss'}">${a.ratio}% buys</span></div>
+      <span class="activity-time">5m/1h</span>
+    </div>`).join('');
+}
+
+async function getJson(path) {
+  const res = await fetch(API + path, { cache: 'no-store' });
+  if (!res.ok) throw new Error(path + ' -> ' + res.status);
+  return res.json();
+}
+
+async function fetchLiveData() {
+  try {
+    const [boosts, profiles] = await Promise.all([
+      getJson('/token-boosts/latest/v1'),
+      getJson('/token-profiles/latest/v1')
+    ]);
+
+    const candidates = new Map();
+    [...boosts, ...profiles].filter(x => x.chainId === 'solana').forEach(x => {
+      if (x.tokenAddress) candidates.set(x.tokenAddress, x);
+    });
+
+    const addresses = [...candidates.keys()].slice(0, 40);
+    const results = await Promise.allSettled(addresses.map(async address => {
+      const data = await getJson('/latest/dex/tokens/' + address);
+      const pairs = (data.pairs || []).filter(p => p.chainId === 'solana' && p.liquidity?.usd);
+      return { meta: candidates.get(address), pair: pairs.sort((a,b) => Number(b.volume?.h24 || 0) - Number(a.volume?.h24 || 0))[0] };
+    }));
+
+    const fresh = results
+      .filter(r => r.status === 'fulfilled' && r.value.pair)
+      .map(r => {
+        const { meta, pair: p } = r.value;
+        const score = fomoScore(p, meta?.amount);
+        const liq = Number(p.liquidity?.usd || 0);
+        const buys = Number(p.txns?.h24?.buys || 0);
+        const sells = Number(p.txns?.h24?.sells || 0);
+        const ageHours = p.pairCreatedAt ? (Date.now() - Number(p.pairCreatedAt)) / 3600000 : 9999;
+        return {
+          symbol: p.baseToken?.symbol || 'UNKNOWN',
+          name: p.baseToken?.name || 'Unknown token',
+          letter: (p.baseToken?.symbol || '?').slice(0,1).toUpperCase(),
+          color: ['orange','purple','pink','blue','yellow'][Math.abs((p.baseToken?.symbol || '').charCodeAt(0)) % 5],
+          price: Number(p.priceUsd || 0),
+          h1: Number(p.priceChange?.h1 || 0),
+          h24: Number(p.priceChange?.h24 || 0),
+          volume: Number(p.volume?.h24 || 0),
+          liquidity: liq,
+          fomo: score,
+          signal: signalFor(score, p),
+          url: p.url,
+          buys, sells,
+          ageHours
+        };
+      })
+      .sort((a,b) => b.fomo - a.fomo);
+
+    if (!fresh.length) throw new Error('No live Solana pairs returned');
+    tokens = fresh;
+    renderTokens(tokens);
+    renderEarly(tokens);
+    renderLeader(tokens);
+    renderStats(tokens);
+    renderActivity(tokens.map(t => ({
+      symbol: t.symbol,
+      side: t.buys >= t.sells ? 'buy-heavy' : 'sell-heavy',
+      count: t.buys + t.sells,
+      ratio: Math.round((t.buys / Math.max(1, t.buys + t.sells)) * 100)
+    })));
+  } catch (err) {
+    console.error(err);
+    if (!tokens.length) tokenList.innerHTML = '<tr><td colspan="9">Live feed unavailable. Try Refresh.</td></tr>';
+  }
+}
+
+document.querySelectorAll('.filter').forEach(button => button.addEventListener('click', () => {
+  document.querySelector('.filter.active')?.classList.remove('active');
+  button.classList.add('active');
+  const f = button.dataset.filter;
+  renderTokens(f === 'all' ? tokens : tokens.filter(t =>
+    f === 'trending' ? t.fomo >= 65 :
+    f === 'gainers' ? t.h24 > 0 :
+    f === 'new' ? t.ageHours < 24 : true
+  ));
+}));
+
+document.querySelector('#search')?.addEventListener('input', event => {
+  const value = event.target.value.toLowerCase();
+  renderTokens(tokens.filter(t => `${t.symbol} ${t.name}`.toLowerCase().includes(value)));
+});
+
+fetchLiveData();
+setInterval(fetchLiveData, REFRESH_MS);
+ + items[0].symbol;
+  if (statHotScore) statHotScore.textContent = items[0].fomo + '/100 FOMO score';
+}
 function renderActivity(items) {
   if (!activityList) return;
   activityList.innerHTML = items.slice(0, 6).map((a, i) => `
