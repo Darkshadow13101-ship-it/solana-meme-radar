@@ -195,7 +195,7 @@ function tokenRow(t, i) {
     <td>${fmtCompact(t.volume)}</td>
     <td>${fmtCompact(t.liquidity)}</td>
     <td><span class="signal ${t.signal.toLowerCase()}">${t.signal} ${t.combined}</span><small class="risk-mini">${riskLabel(t.risk)} RISK</small></td>
-    <td><button class="star" aria-label="Open ${t.symbol}" onclick="window.open('${t.url}','_blank')">↗</button></td>
+    <td><button class="star" aria-label="Inspect ${t.symbol}" onclick="window.showToken('${t.address}')">↗</button></td>
   </tr>`;
 }
 
@@ -238,6 +238,22 @@ function renderEarly(items) {
   }).join('') || '<p class="opportunity-copy">Waiting for live candidates…</p>';
 }
 
+function showToken(address) {
+  const t = tokens.find(x => x.address === address);
+  const modal = document.querySelector('#token-modal');
+  const body = document.querySelector('#token-modal-body');
+  if (!t || !modal || !body) return;
+  const tx = t.buys + t.sells;
+  const buyRatio = Math.round(t.buys / Math.max(1, tx) * 100);
+  const age = t.ageHours < 1 ? Math.max(1, Math.round(t.ageHours * 60)) + 'm' : Math.round(t.ageHours) + 'h';
+  body.innerHTML = `<div class="detail-head"><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div><div class="detail-score"><strong>${t.combined}</strong><span>/100 RADAR</span></div><div class="score-bar"><span style="width:${t.combined}%"></span></div><div class="detail-grid"><div><small>5M</small><b class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(2)}%</b></div><div><small>1H</small><b class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</b></div><div><small>24H</small><b class="${trendClass(t.h24)}">${t.h24 >= 0 ? '+' : ''}${t.h24.toFixed(2)}%</b></div><div><small>BUY PRESSURE</small><b>${buyRatio}%</b></div><div><small>VOLUME</small><b>${fmtCompact(t.volume)}</b></div><div><small>LIQUIDITY</small><b>${fmtCompact(t.liquidity)}</b></div><div><small>AGE</small><b>${age}</b></div><div><small>RISK</small><b>${riskLabel(t.risk)} ${t.risk}/100</b></div></div><p class="detail-note">Why it is moving: momentum, volume acceleration, transaction activity, buy pressure, liquidity and pair age are combined into the Radar score. This is a signal, not a prediction.</p><div class="detail-actions"><button class="watch-button" onclick="window.open('${t.url}','_blank')">Open live pair <span>↗</span></button></div>`;
+  modal.classList.add('open');
+}
+window.showToken = showToken;
+document.addEventListener('click', e => {
+  if (e.target.matches('[data-close-modal]') || e.target.id === 'token-modal') document.querySelector('#token-modal')?.classList.remove('open');
+});
+
 function renderLeader(items) {
   if (!radarPickContent || !items.length) return;
 
@@ -246,7 +262,7 @@ function renderLeader(items) {
 
   radarPickContent.innerHTML = `<div class="opportunity-top"><span class="token-avatar ${t.color}">${t.letter}</span><div><h3 class="token-title">${t.symbol}</h3><p class="muted">${t.name}</p></div><div class="score">${t.combined}<small>/100</small></div></div>
   <div class="score-bar"><span style="width:${t.combined}%"></span></div>
-  <p class="opportunity-copy">Top live radar signal based on momentum, volume acceleration, transaction activity, buy pressure, liquidity, pair age and social activity. Signal only — not a prediction.</p>
+  <p class="opportunity-copy">Top live radar signal based on momentum, volume acceleration, transaction activity, buy pressure, liquidity, pair age and on-chain attention. Signal only — not a prediction.</p>
   <div class="opportunity-metrics"><div><span>5m move</span><strong class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(2)}%</strong></div><div><span>1h move</span><strong class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</strong></div><div><span>Liquidity</span><strong>${fmtCompact(t.liquidity)}</strong></div><div><span>Buy ratio</span><strong>${buyRatio}%</strong></div></div>
   <button class="watch-button" onclick="window.open('${t.url}','_blank')">Open live pair <span>↗</span></button>`;
 }
@@ -271,7 +287,7 @@ function renderActivity(items) {
 function renderMarket(items) {
   const volume = items.reduce((s, t) => s + t.volume, 0);
   if (marketVolume) marketVolume.textContent = fmtCompact(volume);
-  if (marketCaption) marketCaption.textContent = `${items.length} live Solana radar candidates • data refresh 5s`;
+  if (marketCaption) marketCaption.textContent = `${items.length} live Solana radar candidates • data refresh 15s`;
 }
 
 function renderFilteredTokens() {
