@@ -421,7 +421,8 @@ async function fetchSocialRadar() {
     const data = await r.json();
 
     if (!r.ok) {
-      throw new Error(data?.error || 'X API ' + r.status);
+      const detail = data?.error || ('X API ' + r.status);
+      throw new Error(detail + (data?.code ? ' [' + data.code + ']' : ''));
     }
 
     socialPosts = data.posts || [];
@@ -446,9 +447,9 @@ async function fetchSocialRadar() {
   } catch (e) {
     console.error('Moonwatch X radar error:', e);
     const msg = String(e?.message || e || '');
-    const status = msg.includes('not configured')
+    const status = msg.includes('MISSING_TOKEN') || msg.includes('not configured')
       ? 'X TOKEN MISSING'
-      : (msg.includes('401') || msg.includes('403') || msg.includes('Unauthorized') || msg.includes('Invalid'))
+      : (msg.includes('X_API_401') || msg.includes('X_API_403') || msg.includes('Unauthorized') || msg.includes('Invalid'))
         ? 'X TOKEN REJECTED'
         : 'X API ERROR';
     if (socialStatus) socialStatus.textContent = status;
