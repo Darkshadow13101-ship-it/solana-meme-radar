@@ -419,63 +419,6 @@ async function fetchLiveData() {
     }
   }
 }
-async function fetchSocialRadar() {
-  if (!socialFeed) return;
-
-  let data = {};
-  try {
-    const r = await fetch('/api/twitter', { cache: 'no-store' });
-    data = await r.json();
-
-    if (!r.ok) {
-      const detail = data?.error || ('X API ' + r.status);
-      throw new Error(detail + (data?.code ? ' [' + data.code + ']' : ''));
-    }
-
-    socialPosts = data.posts || [];
-
-    tokens.forEach(t => {
-      t.social = socialScoreForToken(t);
-      t.combined = combinedScore(t);
-    });
-    tokens.sort((a, b) => b.combined - a.combined);
-
-    renderTokens(tokens);
-    renderEarly(tokens);
-    renderLeader(tokens);
-    renderFomoLeaderboard(tokens);
-    renderStats(tokens);
-
-    socialFeed.innerHTML = socialPosts.slice(0, 6).map(p =>
-      `<article class="social-post"><a href="${p.url}" target="_blank" rel="noreferrer"><div class="social-meta"><span><span class="social-author">${p.name}</span> @${p.username}</span><span class="social-score">${p.score} SOCIAL</span></div><p class="social-text">${String(p.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p><div class="social-stats">♥ ${Number(p.likes || 0).toLocaleString()} · ↻ ${Number(p.reposts || 0).toLocaleString()} · ↩ ${Number(p.replies || 0).toLocaleString()}<span class="social-tags">${(p.tokenHits || []).join(' ')}</span></div></a></article>`
-    ).join('') || '<p class="opportunity-copy">No major Solana posts found yet.</p>';
-
-    if (socialStatus) socialStatus.textContent = 'X LIVE • ' + new Date().toLocaleTimeString();
-  } catch (e) {
-    console.error('Moonwatch X radar error:', e);
-    const msg = String(e?.message || e || '');
-    const status = msg.includes('MISSING_TOKEN') || msg.includes('not configured')
-      ? 'X TOKEN MISSING'
-      : (msg.includes('X_API_401') || msg.includes('X_API_403') || msg.includes('Unauthorized') || msg.includes('Invalid'))
-        ? 'X TOKEN REJECTED'
-        : 'X API ERROR';
-    if (socialStatus) socialStatus.textContent = status;
-    if (socialFeed) socialFeed.innerHTML =
-      '<p class="opportunity-copy">' +
-      (status === 'X TOKEN MISSING'
-        ? 'Add X_BEARER_TOKEN to Vercel Production, then redeploy.'
-        : status === 'X TOKEN REJECTED'
-          ? 'X rejected the credential. ' + (data?.error || 'Check the X credential.') +
-            (data?.hint ? '<br><small>' + String(data.hint).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</small>' : '') +
-            (data?.diagnostics ? '<br><small>Vercel: ' + String(data.diagnostics.vercelEnv || 'unknown') +
-              ' • Build: ' + String(data.diagnostics.commit || 'unknown') +
-              ' • Token loaded: ' + (data.diagnostics.tokenConfigured ? 'YES' : 'NO') +
-              ' • Token length: ' + String(data.diagnostics.tokenLength || 0) + '</small>' : '')
-          : 'X could not be reached. Check the deployment logs and X API access.') +
-      '</p>';
-  }
-}
-
 document.querySelectorAll('.filter').forEach(button => {
   button.addEventListener('click', () => {
     document.querySelector('.filter.active')?.classList.remove('active');
