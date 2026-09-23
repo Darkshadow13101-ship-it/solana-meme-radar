@@ -21,3 +21,12 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:#596577;font-s
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 8px var(--green)}50%{opacity:.45;box-shadow:0 0 18px var(--green)}}
 @media(max-width:900px){.hero{grid-template-columns:1fr}.market-pulse{width:auto}.lower-grid{grid-template-columns:1fr}}
 @media(max-width:750px){.app-shell{padding:0 14px}.network,.icon-button{display:none}.topbar{height:64px}.hero{padding:38px 0 25px}.hero h1{font-size:40px;letter-spacing:-2px}.control-row{flex-wrap:wrap;padding:8px}.search{width:100%}.filters{overflow:auto;width:100%}.filter-button{margin-left:0}.stats{grid-template-columns:1fr 1fr}.stats article:nth-child(2){border-right:0}.stats article:nth-child(-n+2){border-bottom:1px solid var(--line)}.section-heading{padding:18px 15px 13px}.section-heading h2,.panel h2{font-size:18px}.lower-grid{margin-top:25px}.panel{padding:17px}}
+
+.early-section{margin:0 0 34px;border:1px solid var(--line);border-radius:16px;background:rgba(10,14,23,.8);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.18)}
+.early-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 14px 14px}
+.early-card{border:1px solid var(--line);border-radius:13px;background:linear-gradient(145deg,#111927,#0b1019);padding:16px;position:relative;overflow:hidden}
+.early-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 100% 0%,rgba(186,255,85,.08),transparent 35%);pointer-events:none}
+.early-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.early-score{display:flex;align-items:baseline;gap:6px;margin-top:16px}.early-score strong{font-family:'DM Mono';font-size:31px;color:var(--green)}.early-score span{font-family:'DM Mono';font-size:9px;color:var(--muted)}
+.early-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;border-top:1px solid var(--line);padding-top:13px;margin-top:12px}.early-metrics small{display:block;color:var(--muted);font-size:8px;margin-bottom:4px}.early-metrics b{font-family:'DM Mono';font-size:10px}
+@media(max-width:900px){.early-grid{grid-template-columns:1fr}}
