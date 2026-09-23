@@ -118,7 +118,13 @@ export default async function handler(req, res) {
           x_errors: lastError.errors,
           hint: r.status === 401
             ? 'The Bearer Token was rejected by X.'
-            : 'X accepted the request format but denied this app/token access.'
+            : 'X accepted the request format but denied this app/token access.',
+          diagnostics: {
+            vercelEnv: process.env.VERCEL_ENV || 'unknown',
+            commit: String(process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 12) || 'unknown',
+            tokenConfigured: Boolean(token),
+            tokenLength: token.length
+          }
         });
       }
     }
