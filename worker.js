@@ -16,27 +16,32 @@ function dex(x){
 function response(obj,status=200){return new Response(JSON.stringify(obj),{status,headers:{"content-type":"application/json","cache-control":"no-store"}})}
 async function market(){
   let out=[];
-  for(const q of ["SOL","meme","pump","dog","cat","inu","ai","moon"]){
-    try{const d=await get("https://api.dexscreener.com/latest/dex/search?q="+encodeURIComponent(q),30000);
+  // Search several meme-oriented terms, then rank by short-window activity.
+  for(const q of ["meme","pump","dog","cat","inu","ai","moon","pepe","bonk","wif"]){
+    try{
+      const d=await get("https://api.dexscreener.com/latest/dex/search?q="+encodeURIComponent(q),30000);
       for(const x of d.pairs||[])if(x?.chainId==="solana"&&x.baseToken?.address)out.push(dex(x));
     }catch{}
   }
-  const seen=new Set();
-  const now=Date.now();
+  const seen=new Set(),now=Date.now();
   out=out
     .filter(x=>x.address&&!seen.has(x.address)&&seen.add(x.address))
     .filter(x=>x.symbol&&x.symbol!=="SOL"&&x.name.toLowerCase()!=="solana")
-    .filter(x=>x.liquidity>=15000)
-    .filter(x=>x.volume>=100)
-    .filter(x=>x.buys+x.sells>=5)
+    .filter(x=>x.liquidity>=15000&&x.volume>=100&&x.buys+x.sells>=5)
     .filter(x=>!x.pairCreatedAt||now-x.pairCreatedAt<=30*24*60*60*1000)
-    .sort((a,b)=>{
-      const activity=x=>Math.log10(1+Math.max(0,x.volume))*18+Math.log10(1+Math.max(0,x.liquidity))*10+Math.min(20,(x.buys+x.sells)/100);
-      const momentum=x=>Math.max(0,x.m5)*5+Math.max(0,x.h1)*2+Math.max(0,x.h24)*.35;
-      return (activity(b)+momentum(b))-(activity(a)+momentum(a));
+    .map(x=>{
+      const tx5=x.buys5+x.sells5,tx1=x.buys1+x.sells1;
+      const buy5=tx5?x.buys5/tx5:0, buy1=tx1?x.buys1/tx1:0;
+      const recentVolume=Math.max(0,x.volume)*Math.min(1,(tx1+tx5)/250);
+      const momentum=Math.max(0,x.m5)*8+Math.max(0,x.h1)*2.5+Math.max(0,x.h24)*.15;
+      const pressure=(buy5-.5)*35+(buy1-.5)*25;
+      const freshness=x.pairCreatedAt?Math.max(0,1-(now-x.pairCreatedAt)/(30*24*60*60*1000)):0;
+      const score=recentVolume/1000+momentum*100+pressure*100+freshness*20;
+      return {...x,radarScore:score};
     })
+    .sort((a,b)=>b.radarScore-a.radarScore)
     .slice(0,80);
-  if(!out.length)throw Error("No verified Solana market data");
+  if(!out.length)throw Error("No verified active Solana meme data");
   return {data:out,source:"DEXSCREENER LIVE",updatedAt:new Date().toISOString()};
 }
 async function search(q){
