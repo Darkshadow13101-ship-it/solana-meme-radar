@@ -11,6 +11,8 @@ const marketVolume = document.querySelector('#market-volume');
 const marketCaption = document.querySelector('#market-caption');
 const socialFeed = document.querySelector('#social-feed');
 const socialStatus = document.querySelector('#social-status');
+const riskFeed = document.querySelector('#risk-feed');
+const breakoutFeed = document.querySelector('#breakout-feed');
 
 const API = '/api/market';
 const UI_REFRESH_MS = 1000;
@@ -276,6 +278,31 @@ function renderStats(items) {
   if (statHotScore) statHotScore.textContent = items[0].combined + '/100 RADAR score';
 }
 
+function renderRiskScanner(items) {
+  if (!riskFeed) return;
+  const ranked = [...items].sort((a, b) => b.risk - a.risk).slice(0, 6);
+  riskFeed.innerHTML = ranked.map(t => {
+    const tx = t.buys + t.sells;
+    const buyRatio = Math.round(t.buys / Math.max(1, tx) * 100);
+    const flags = [];
+    if (t.liquidity < 50000) flags.push('LOW LIQ');
+    if (t.ageHours < 6) flags.push('NEW');
+    if (tx < 20) flags.push('LOW TX');
+    if (t.volume > 0 && t.liquidity > 0 && t.volume / t.liquidity > 25) flags.push('HIGH TURN');
+    return `<button class="risk-card" onclick="window.showToken('${t.address}')"><div class="risk-card-top"><span class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></span><strong>${t.risk}<small>/100</small></strong></div><div class="risk-bar"><span style="width:${t.risk}%"></span></div><div class="risk-flags">${flags.map(f => `<span>${f}</span>`).join('') || '<span>MONITOR</span>'}<em>${buyRatio}% buys</em></div></button>`;
+  }).join('') || '<p class="opportunity-copy">Risk scanner is warming up…</p>';
+}
+
+function renderBreakoutBoard(items) {
+  if (!breakoutFeed) return;
+  const ranked = [...items].sort((a, b) => {
+    const aJump = Math.max(0, a.m5) * 4 + Math.max(0, a.h1) + Number(a.social || 0) * 0.25;
+    const bJump = Math.max(0, b.m5) * 4 + Math.max(0, b.h1) + Number(b.social || 0) * 0.25;
+    return bJump - aJump;
+  }).slice(0, 6);
+  breakoutFeed.innerHTML = ranked.map(t => `<button class="breakout-card" onclick="window.showToken('${t.address}')"><div><b>${t.symbol}</b><small>${t.signal} • ${t.social} attention</small></div><strong class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(1)}%</strong><span>5M</span></button>`).join('');
+}
+
 function renderActivity(items) {
   if (!activityList) return;
 
@@ -414,6 +441,8 @@ async function fetchLiveData() {
     tokens = mapped.sort((a, b) => b.combined - a.combined);
 
     renderBreaking();
+    renderBreakoutBoard(tokens);
+    renderRiskScanner(tokens);
     renderAttentionRadar();
     renderTokens(tokens);
     renderEarly(tokens);
