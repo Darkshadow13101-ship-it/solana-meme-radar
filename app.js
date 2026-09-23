@@ -253,7 +253,7 @@ function showToken(address) {
   const tx = t.buys + t.sells;
   const buyRatio = Math.round(t.buys / Math.max(1, tx) * 100);
   const age = t.ageHours < 1 ? Math.max(1, Math.round(t.ageHours * 60)) + 'm' : Math.round(t.ageHours) + 'h';
-  body.innerHTML = `<div class="detail-head"><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div><div class="detail-score"><strong>${t.combined}</strong><span>/100 RADAR</span></div><div class="score-bar"><span style="width:${t.combined}%"></span></div><div class="detail-grid"><div><small>5M</small><b class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(2)}%</b></div><div><small>1H</small><b class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</b></div><div><small>24H</small><b class="${trendClass(t.h24)}">${t.h24 >= 0 ? '+' : ''}${t.h24.toFixed(2)}%</b></div><div><small>BUY PRESSURE</small><b>${buyRatio}%</b></div><div><small>VOLUME</small><b>${fmtCompact(t.volume)}</b></div><div><small>LIQUIDITY</small><b>${fmtCompact(t.liquidity)}</b></div><div><small>AGE</small><b>${age}</b></div><div><small>RISK</small><b>${riskLabel(t.risk)} ${t.risk}/100</b></div></div><p class="detail-note">Why it is moving: momentum, volume acceleration, transaction activity, buy pressure, liquidity and pair age are combined into the Radar score. This is a signal, not a prediction.</p><div class="detail-actions"><button class="watch-button" onclick="window.open('${t.url}','_blank')">Open live pair <span>↗</span></button></div>`;
+  body.innerHTML = `<div class="detail-head"><div class="token-cell">${avatarMarkup(t)}<span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div><div class="detail-score"><strong>${t.combined}</strong><span>/100 RADAR</span></div><div class="score-bar"><span style="width:${t.combined}%"></span></div><div class="detail-grid"><div><small>5M</small><b class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(2)}%</b></div><div><small>1H</small><b class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(2)}%</b></div><div><small>24H</small><b class="${trendClass(t.h24)}">${t.h24 >= 0 ? '+' : ''}${t.h24.toFixed(2)}%</b></div><div><small>BUY PRESSURE</small><b>${buyRatio}%</b></div><div><small>VOLUME</small><b>${fmtCompact(t.volume)}</b></div><div><small>LIQUIDITY</small><b>${fmtCompact(t.liquidity)}</b></div><div><small>AGE</small><b>${age}</b></div><div><small>RISK</small><b>${riskLabel(t.risk)} ${t.risk}/100</b></div></div><p class="detail-note">Why it is moving: momentum, volume acceleration, transaction activity, buy pressure, liquidity and pair age are combined into the Radar score. This is a signal, not a prediction.</p><div class="detail-actions"><button class="watch-button" onclick="window.open('${t.url}','_blank')">Open live pair <span>↗</span></button></div>`;
   modal.classList.add('open');
 }
 window.showToken = showToken;
@@ -322,7 +322,6 @@ async function refreshTokenImages(items) {
     });
     renderFilteredTokens();
     renderEarly(tokens);
-    refreshTokenImages(tokens);
     renderRiskScanner(tokens);
   } catch(e) { console.warn('Token image radar:', e); }
 }
@@ -511,6 +510,7 @@ async function fetchLiveData() {
       ratio: Math.round(t.buys / Math.max(1, t.buys + t.sells) * 100)
     })));
     updateLiveClock();
+    refreshTokenImages(tokens);
     refreshTradeRadar(tokens);
   } catch (err) {
     console.error('Moonwatch feed error:', err);
