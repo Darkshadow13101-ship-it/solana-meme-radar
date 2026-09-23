@@ -24,7 +24,7 @@
           <h1>Catch the next<br /><span>big green candle.</span></h1>
           <p class="hero-copy">A no-noise radar for the tokens, wallets, and on-chain signals moving right now.</p>
         </div>
-        <div class="market-pulse"><p>Solana memecoin volume</p><strong>$287.4M</strong><span class="positive">↗ 18.6% <em>in the last 24h</em></span></div>
+        <div class="market-pulse"><p>Live Solana pair volume</p><strong id="market-volume">Loading…</strong><span id="market-caption">Fetching market data</span></div>
       </section>
 
       <section class="control-row" aria-label="Token controls">
@@ -46,8 +46,8 @@
       </section>
 
       <section class="lower-grid">
-        <article class="panel activity"><div class="panel-heading"><div><p class="eyebrow">ON-CHAIN</p><h2>Smart money activity</h2></div><button class="more" aria-label="More activity options">•••</button></div><div id="activity-list"></div><button class="panel-link">See all activity <span>→</span></button></article>
-        <article class="panel opportunity"><p class="eyebrow">RADAR PICK</p><div class="opportunity-top"><div class="token-avatar purple">W</div><div><p class="token-title">WIF</p><p class="muted">dogwifhat</p></div><span class="score">92 <small>/100</small></span></div><div class="score-bar"><span></span></div><p class="opportunity-copy">Strong holder growth, fresh smart money entries, and volume accelerating across DEXs.</p><div class="opportunity-metrics"><div><span>24h volume</span><strong>$42.8M</strong></div><div><span>Holders</span><strong>173.6K</strong></div></div><button class="watch-button">View token radar <span>↗</span></button></article>
+        <article class="panel activity"><div class="panel-heading"><div><p class="eyebrow">LIVE MARKET</p><h2>Pair activity</h2></div><span class="live-status">Live feed</span></div><div id="activity-list"></div><a class="panel-link" href="https://dexscreener.com/solana" target="_blank" rel="noreferrer">Explore Solana pairs <span>↗</span></a></article>
+        <article class="panel opportunity" id="radar-pick"><p class="eyebrow">LIVE MARKET LEADER</p><div id="radar-pick-content"><p class="opportunity-copy">Loading the strongest live pair…</p></div></article>
       </section>
       <footer>Moonwatch is a market intelligence tool, not financial advice. Always do your own research.</footer>
     </main>
