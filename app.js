@@ -2,7 +2,12 @@
 const n=v=>Number.isFinite(Number(v))?Number(v):0, money=v=>{v=n(v);if(v>=1e9)return '$'+(v/1e9).toFixed(1)+'B';if(v>=1e6)return '$'+(v/1e6).toFixed(1)+'M';if(v>=1e3)return '$'+(v/1e3).toFixed(1)+'K';if(!v)return '—';return '$'+(v>=1?v.toLocaleString(undefined,{maximumFractionDigits:4}):v.toPrecision(4))},pct=v=>(n(v)>=0?'+':'')+n(v).toFixed(2)+'%',age=t=>t.pairCreatedAt?Math.max(0,(Date.now()-n(t.pairCreatedAt))/36e5):9999;
 function risk(t){let r=25,l=n(t.liquidity),tx=n(t.buys1)+n(t.sells1);if(l<25000)r+=40;else if(l<100000)r+=20;if(age(t)<2)r+=12;if(tx<10)r+=10;return Math.min(100,r)}
 function score(t){const tx=n(t.buys5)+n(t.sells5),bp=tx?n(t.buys5)/tx:.5;return Math.max(0,Math.min(100,Math.round(30+Math.min(25,Math.max(0,n(t.m5)*3))+Math.min(18,Math.max(0,n(t.h1)))+Math.min(15,(bp-.5)*35)+Math.min(12,Math.log10(Math.max(1,tx))*4)+(age(t)<24?10:0))))}
-function prep(a){return a.filter(x=>x.address).map(x=>({...x,radar:score(x),risk:risk(x)})).sort((a,b)=>b.radar-a.radar)}
+function prep(a){
+  const rows=a.filter(x=>x.address).map(x=>({...x,risk:risk(x)}));
+  const raw=rows.map(x=>Number(x.radarScore)||0);
+  const max=Math.max(...raw,1);
+  return rows.map((x,i)=>({...x,radar:Math.max(0,Math.min(100,Math.round(raw[i]/max*100)))})).sort((a,b)=>b.radar-a.radar)
+}
 async function get(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
 function img(t){return t.imageUrl||('https://dd.dexscreener.com/ds-data/tokens/solana/'+t.address+'.png')}
 function coin(t){return '<div class="coin"><img src="'+img(t)+'" onerror="this.style.visibility=\'hidden\'"><span><b>'+t.symbol+'</b><small>'+t.name+'</small></span></div>'}
