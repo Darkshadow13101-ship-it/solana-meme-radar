@@ -14,7 +14,7 @@ const socialStatus = document.querySelector('#social-status');
 
 const API = 'https://api.geckoterminal.com/api/v2';
 const UI_REFRESH_MS = 1000;
-const DATA_REFRESH_MS = 5000;
+const DATA_REFRESH_MS = 15000;
 const DISCOVERY_REFRESH_MS = 15000;
 
 let lastDataRefresh = 0;
@@ -309,97 +309,78 @@ async function fetchLiveData() {
     if (now - lastDataRefresh < DATA_REFRESH_MS && tokens.length) return;
     lastDataRefresh = now;
 
-    let candidates = window.__moonwatchCandidates || [];
+    // Use GeckoTerminal's trending pool payload directly.
+    // The public API is rate-limited, so avoid making one request per token.
+    const data = await getJson('/networks/solana/trending_pools?page=1');
+    const pools = Array.isArray(data?.data) ? data.data.slice(0, 20) : [];
 
-    if (!candidates.length || now - lastDiscovery >= DISCOVERY_REFRESH_MS) {
-      const data = await getJson('/networks/solana/trending_pools?page=1');
-      candidates = (data.data || [])
-        .slice(0, 30)
-        .map(x => x.relationships?.base_token?.data?.id)
-        .filter(Boolean);
-      window.__moonwatchCandidates = candidates;
-      lastDiscovery = now;
-    }
-
-    const addresses = candidates
-      .map(id => id.replace(/^solana_/, ''))
-      .filter(Boolean)
-      .slice(0, 30);
-
-    const results = await Promise.allSettled(addresses.map(async address => {
-      const data = await getJson('/networks/solana/tokens/' + encodeURIComponent(address) + '/pools?page=1');
-      const pool = (data.data || [])[0];
-      if (!pool) return null;
-
-      const a = pool.attributes || {};
-      const base = pool.relationships?.base_token?.data?.id?.replace(/^solana_/, '') || address;
-      const pairName = String(a.name || '').split(' / ');
+    const fresh = pools.map(pool => {
+      const a = pool?.attributes || {};
+      const base = String(pool?.relationships?.base_token?.data?.id || pool?.id || '')
+        .replace(/^solana_/, '')
+        .trim();
+      const pairName = String(a.name || 'UNKNOWN / SOL').split(' / ');
       const symbol = pairName[0] || 'UNKNOWN';
+      const pc = a.price_change_percentage || {};
+      const vol = a.volume_usd || {};
+      const tx = a.transactions || {};
+
+      const p = {
+        baseToken: { symbol, name: symbol },
+        priceUsd: a.base_token_price_usd,
+        priceChange: {
+          m5: pc.m5, m15: pc.m15, h1: pc.h1, h24: pc.h24
+        },
+        volume: {
+          m5: vol.m5, h1: vol.h1, h24: vol.h24
+        },
+        liquidity: { usd: a.reserve_in_usd },
+        txns: {
+          m5: { buys: tx.m5?.buys, sells: tx.m5?.sells },
+          h1: { buys: tx.h1?.buys, sells: tx.h1?.sells },
+          h24: { buys: tx.h24?.buys, sells: tx.h24?.sells }
+        },
+        pairCreatedAt: a.pool_created_at ? Date.parse(a.pool_created_at) : undefined,
+        url: base ? 'https://axiom.trade/' + base : 'https://axiom.trade/'
+      };
+
+      return { address: base, pair: p };
+    }).filter(x => x.address);
+
+    const mapped = fresh.map(r => {
+      const p = r.pair;
+      const score = fomoScore(p);
+      const buys = Number(p.txns?.h24?.buys || 0);
+      const sells = Number(p.txns?.h24?.sells || 0);
+      const ageHours = p.pairCreatedAt ? (Date.now() - Number(p.pairCreatedAt)) / 3600000 : 9999;
 
       return {
-        address: base,
-        pair: {
-          baseToken: { symbol, name: symbol },
-          priceUsd: a.base_token_price_usd,
-          priceChange: {
-            m5: a.price_change_percentage?.m5,
-            m15: a.price_change_percentage?.m15,
-            h1: a.price_change_percentage?.h1,
-            h24: a.price_change_percentage?.h24
-          },
-          volume: {
-            m5: a.volume_usd?.m5,
-            h1: a.volume_usd?.h1,
-            h24: a.volume_usd?.h24
-          },
-          liquidity: { usd: a.reserve_in_usd },
-          txns: {
-            m5: { buys: a.transactions?.m5?.buys, sells: a.transactions?.m5?.sells },
-            h1: { buys: a.transactions?.h1?.buys, sells: a.transactions?.h1?.sells },
-            h24: { buys: a.transactions?.h24?.buys, sells: a.transactions?.h24?.sells }
-          },
-          pairCreatedAt: a.pool_created_at ? Date.parse(a.pool_created_at) : undefined,
-          url: 'https://axiom.trade/' + base
-        }
+        address: r.address,
+        symbol: p.baseToken.symbol,
+        name: p.baseToken.name,
+        letter: p.baseToken.symbol.slice(0, 1).toUpperCase(),
+        color: ['orange', 'purple', 'pink', 'blue', 'yellow'][Math.abs(p.baseToken.symbol.charCodeAt(0)) % 5],
+        price: Number(p.priceUsd || 0),
+        m5: Number(p.priceChange.m5 || 0),
+        h1: Number(p.priceChange.h1 || 0),
+        h24: Number(p.priceChange.h24 || 0),
+        volume: Number(p.volume.h24 || 0),
+        liquidity: Number(p.liquidity.usd || 0),
+        fomo: score,
+        social: 0,
+        combined: score,
+        risk: riskScore(p),
+        signal: signalFor(score, p),
+        url: p.url,
+        buys,
+        sells,
+        ageHours
       };
-    }));
+    });
 
-    const fresh = results
-      .filter(r => r.status === 'fulfilled' && r.value)
-      .map(r => {
-        const p = r.value.pair;
-        const score = fomoScore(p);
-        const buys = Number(p.txns?.h24?.buys || 0);
-        const sells = Number(p.txns?.h24?.sells || 0);
-        const ageHours = p.pairCreatedAt ? (Date.now() - Number(p.pairCreatedAt)) / 3600000 : 9999;
+    if (!mapped.length) throw new Error('No live Solana trending pools returned');
 
-        return {
-          address: r.value.address,
-          symbol: p.baseToken.symbol,
-          name: p.baseToken.name,
-          letter: p.baseToken.symbol.slice(0, 1).toUpperCase(),
-          color: ['orange', 'purple', 'pink', 'blue', 'yellow'][Math.abs(p.baseToken.symbol.charCodeAt(0)) % 5],
-          price: Number(p.priceUsd || 0),
-          m5: Number(p.priceChange.m5 || 0),
-          h1: Number(p.priceChange.h1 || 0),
-          h24: Number(p.priceChange.h24 || 0),
-          volume: Number(p.volume.h24 || 0),
-          liquidity: Number(p.liquidity.usd || 0),
-          fomo: score,
-          social: 0,
-          combined: score,
-          risk: riskScore(p),
-          signal: signalFor(score, p),
-          url: p.url,
-          buys,
-          sells,
-          ageHours
-        };
-      });
-
-    if (!fresh.length) throw new Error('No live Solana pairs returned');
-
-    fresh.forEach(t => {
+    mapped.forEach(t => {
       t.social = socialScoreForToken(t);
       t.combined = combinedScore(t);
       t.signal = signalFor(t.combined, {
@@ -408,8 +389,8 @@ async function fetchLiveData() {
       });
     });
 
-    detectBreakouts(fresh);
-    tokens = fresh.sort((a, b) => b.combined - a.combined);
+    detectBreakouts(mapped);
+    tokens = mapped.sort((a, b) => b.combined - a.combined);
 
     renderBreaking();
     renderTokens(tokens);
@@ -432,7 +413,6 @@ async function fetchLiveData() {
     }
   }
 }
-
 async function fetchSocialRadar() {
   if (!socialFeed) return;
 
