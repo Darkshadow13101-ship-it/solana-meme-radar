@@ -1,5 +1,6 @@
 (()=>{const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],num=v=>Number.isFinite(Number(v))?Number(v):0;
 let tokens=[],filter='all',search='',events=[];
+const avatar=t=>{const a=String(t.address||'');return a?'<img class="token-avatar-img" src="https://dd.dexscreener.com/ds-data/tokens/solana/'+a+'.png" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'<span class="token-avatar blue">'+String(t.symbol||'?')[0]+'</span>'};
 const compact=v=>{v=num(v);return v>=1e9?'$'+(v/1e9).toFixed(1)+'B':v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':'$'+Math.round(v)};
 const price=v=>{v=num(v);return v?('$'+(v>=1?v.toLocaleString(undefined,{maximumFractionDigits:4}):v>=.01?v.toFixed(4):v.toPrecision(4))):'—'};
 const ago=t=>t?.pairCreatedAt?Math.max(0,(Date.now()-num(t.pairCreatedAt))/36e5):9999;
