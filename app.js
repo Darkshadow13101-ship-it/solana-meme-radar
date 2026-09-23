@@ -10,8 +10,10 @@ const statHotScore = document.querySelector('#stat-hot-score');
 const marketVolume = document.querySelector('#market-volume');
 const marketCaption = document.querySelector('#market-caption');
 
-const API = 'https://api.dexscreener.com';
-const REFRESH_MS = 30000;
+const API = 'https://api.geckoterminal.com/api/v2';
+const REFRESH_MS = 1000;
+const DISCOVERY_REFRESH_MS = 15000;
+let lastDiscovery = 0;
 let activeFilter = 'all';
 let searchValue = '';
 
@@ -82,7 +84,7 @@ function renderEarly(items) {
   earlyOpportunities.innerHTML = items.slice(0, 3).map(t => {
     const age = t.ageHours < 1 ? Math.max(1, Math.round(t.ageHours * 60)) + 'm' : Math.round(t.ageHours) + 'h';
     const buyRatio = Math.round(t.buys / Math.max(1, t.buys + t.sells) * 100);
-    return `<article class="early-card"><div class="early-head"><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div><div class="early-score"><strong>${t.fomo}</strong><span>/100 FOMO</span></div><div class="score-bar"><span style="width:${t.fomo}%"></span></div><div class="early-metrics"><span><small>AGE</small><b>${age}</b></span><span><small>5M</small><b class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(1)}%</b></span><span><small>1H</small><b class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(1)}%</b></span><span><small>BUYS</small><b>${buyRatio}%</b></span></div><button class="watch-button" onclick="window.open('${t.url}','_blank')">Open on Dexscreener <span>↗</span></button></article>`;
+    return `<article class="early-card"><div class="early-head"><div class="token-cell"><span class="token-avatar ${t.color}">${t.letter}</span><span><b>${t.symbol}</b><small>${t.name}</small></span></div><span class="signal ${t.signal.toLowerCase()}">${t.signal}</span></div><div class="early-score"><strong>${t.fomo}</strong><span>/100 FOMO</span></div><div class="score-bar"><span style="width:${t.fomo}%"></span></div><div class="early-metrics"><span><small>AGE</small><b>${age}</b></span><span><small>5M</small><b class="${trendClass(t.m5)}">${t.m5 >= 0 ? '+' : ''}${t.m5.toFixed(1)}%</b></span><span><small>1H</small><b class="${trendClass(t.h1)}">${t.h1 >= 0 ? '+' : ''}${t.h1.toFixed(1)}%</b></span><span><small>BUYS</small><b>${buyRatio}%</b></span></div><button class="watch-button" onclick="window.open('${t.url}','_blank')">Open on Axiom <span>↗</span></button></article>`;
   }).join('') || '<p class="opportunity-copy">Waiting for live candidates…</p>';
 }
 function renderLeader(items) {
@@ -105,23 +107,39 @@ function renderActivity(items) {
 function renderMarket(items) {
   const volume = items.reduce((s, t) => s + t.volume, 0);
   if (marketVolume) marketVolume.textContent = fmtCompact(volume);
-  if (marketCaption) marketCaption.textContent = `${items.length} live Solana radar candidates • refreshes every 30s`;
+  if (marketCaption) marketCaption.textContent = `${items.length} live Solana radar candidates • live 1s radar`;
 }
 async function getJson(path) {
-  const res = await fetch(API + path, { cache: 'no-store' });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7000);
+  let res;
+  try { res = await fetch(API + path, { cache: 'no-store', signal: controller.signal }); } finally { clearTimeout(timeout); }
   if (!res.ok) throw new Error(path + ' -> ' + res.status);
   return res.json();
 }
 async function fetchLiveData() {
   try {
-    const [boosts, profiles] = await Promise.all([getJson('/token-boosts/latest/v1'), getJson('/token-profiles/latest/v1')]);
-    const candidates = new Map();
-    [...(Array.isArray(boosts) ? boosts : []), ...(Array.isArray(profiles) ? profiles : [])].filter(x => x.chainId === 'solana' && x.tokenAddress).forEach(x => candidates.set(x.tokenAddress, x));
-    const addresses = [...candidates.keys()].slice(0, 40);
+    const now = Date.now();
+    let candidates = window.__moonwatchCandidates || [];
+    if (!candidates.length || now - lastDiscovery >= DISCOVERY_REFRESH_MS) {
+      const data = await getJson('/networks/solana/trending_pools?page=1');
+      candidates = (data.data || []).slice(0, 30).map(x => x.relationships?.base_token?.data?.id).filter(Boolean);
+      window.__moonwatchCandidates = candidates;
+      lastDiscovery = now;
+    }
+    const addresses = candidates.map(id => id.replace(/^solana_/, '')).filter(Boolean).slice(0, 30);
     const results = await Promise.allSettled(addresses.map(async address => {
-      const data = await getJson('/latest/dex/tokens/' + address);
-      const pairs = (data.pairs || []).filter(p => p.chainId === 'solana' && p.liquidity?.usd);
-      return { meta: candidates.get(address), pair: pairs.sort((a, b) => Number(b.volume?.h24 || 0) - Number(a.volume?.h24 || 0))[0] };
+      const data = await getJson('/networks/solana/tokens/' + address + '/pools?page=1');
+      const pool = (data.data || [])[0];
+      const a = pool?.attributes || {};
+      const base = pool?.relationships?.base_token?.data?.id?.replace(/^solana_/, '') || address;
+      return { meta: { tokenAddress: base }, pair: pool ? {
+        baseToken: { symbol: a.name?.split(' / ')[0] || 'UNKNOWN', name: a.name?.split(' / ')[0] || 'Unknown token' },
+        priceUsd: a.base_token_price_usd, priceChange: { m5: a.price_change_percentage?.m5, h1: a.price_change_percentage?.h1, h24: a.price_change_percentage?.h24 },
+        volume: { m5: a.volume_usd?.m5, h1: a.volume_usd?.h1, h24: a.volume_usd?.h24 },
+        liquidity: { usd: a.reserve_in_usd }, txns: { m5: { buys: a.transactions?.m5?.buys, sells: a.transactions?.m5?.sells }, h1: { buys: a.transactions?.h1?.buys, sells: a.transactions?.h1?.sells }, h24: { buys: a.transactions?.h24?.buys, sells: a.transactions?.h24?.sells } }, pairCreatedAt: a.pool_created_at ? Date.parse(a.pool_created_at) : undefined,
+        url: 'https://axiom.trade/meme/' + base
+      } : null };
     }));
     const fresh = results.filter(r => r.status === 'fulfilled' && r.value.pair).map(r => {
       const p = r.value.pair, meta = r.value.meta, score = fomoScore(p, meta?.amount);
