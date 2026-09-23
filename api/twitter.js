@@ -22,14 +22,15 @@ export default async function handler(req, res) {
   const posts = (data.data || []).map(p => {
     const m = p.public_metrics || {};
     const u = users[p.author_id] || {};
-    const engagement = (m.like_count || 0) + (m.repost_count || 0) * 2 + (m.quote_count || 0) * 3 + (m.reply_count || 0);
+    const reposts = m.retweet_count ?? m.repost_count ?? 0;
+    const engagement = (m.like_count || 0) + reposts * 2 + (m.quote_count || 0) * 3 + (m.reply_count || 0);
     const text = p.text || '';
     const tokenHits = (text.match(/\$[A-Za-z]{2,12}/g) || []).slice(0, 5);
     const score = Math.min(100, Math.round(Math.log10(engagement + 1) * 18 + (u.verified ? 12 : 0) + Math.min(20, tokenHits.length * 5)));
     return {
       id: p.id, text, createdAt: p.created_at, username: u.username || 'unknown',
       name: u.name || u.username || 'unknown', verified: !!u.verified,
-      likes: m.like_count || 0, reposts: m.repost_count || 0, replies: m.reply_count || 0,
+      likes: m.like_count || 0, reposts, replies: m.reply_count || 0,
       engagement, score, tokenHits,
       url: 'https://x.com/' + (u.username || 'i') + '/status/' + p.id
     };
