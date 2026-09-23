@@ -429,7 +429,7 @@ function renderAttentionRadar() {
   socialFeed.innerHTML = top.map(t => {
     const tx = Number(t.buys || 0) + Number(t.sells || 0);
     const buyRatio = Math.round(Number(t.buys || 0) / Math.max(1, tx) * 100);
-    return \`<article class="social-post"><a href="${t.url}" target="_blank" rel="noreferrer"><div class="social-meta"><span><span class="social-author">${t.symbol}</span> ${t.name}</span><span class="social-score">${t.social} ATTENTION</span></div><p class="social-text">Live on-chain attention signal: ${buyRatio}% buys, ${tx.toLocaleString()} recent trades, +${Number(t.m5 || 0).toFixed(1)}% in 5m.</p><div class="social-stats">Volume ${fmtCompact(t.volume)} · Liquidity ${fmtCompact(t.liquidity)}<span class="social-tags">ON-CHAIN</span></div></a></article>\`;
+    return `<article class="social-post"><a href="${t.url}" target="_blank" rel="noreferrer"><div class="social-meta"><span><span class="social-author">${t.symbol}</span> ${t.name}</span><span class="social-score">${t.social} ATTENTION</span></div><p class="social-text">Live on-chain attention signal: ${buyRatio}% buys, ${tx.toLocaleString()} recent trades, +${Number(t.m5 || 0).toFixed(1)}% in 5m.</p><div class="social-stats">Volume ${fmtCompact(t.volume)} · Liquidity ${fmtCompact(t.liquidity)}<span class="social-tags">ON-CHAIN</span></div></a></article>`;
   }).join('') || '<p class="opportunity-copy">Waiting for live market signals…</p>';
 
   if (socialStatus) socialStatus.textContent = 'ON-CHAIN LIVE • ' + new Date().toLocaleTimeString();
